@@ -1,15 +1,29 @@
 import express from "express";
 import { DatabaseConfig } from "#config/database.js";
 import apiRoutes from "#routes/index.js";
+import { skipLogging, errorLoggingMiddleware, performanceLoggingMiddleware, developmentLoggingMiddleware } from "#middleware/logging.middleware.js";
+import { logger } from "#utils/logger.js";
 
 const app = express();
 const port = process.env.PORT ?? "3000";
 
-// Middleware
+// Trust proxy for accurate IP addresses (if behind reverse proxy)
+app.set("trust proxy", true);
+
+// Logging middleware (applied early to catch all requests)
+app.use(skipLogging(["/health", "/favicon.ico", "/robots.txt"]));
+
+// Performance monitoring (log slow requests > 1000ms)
+app.use(performanceLoggingMiddleware(1000));
+
+// Development logging (only in development mode)
+app.use(developmentLoggingMiddleware);
+
+// Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// CORS middleware (if needed)
+// CORS middleware
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -40,7 +54,7 @@ app.get("/", (req, res) => {
 app.use(`${process.env.API_PREFIX}`, apiRoutes);
 
 // Database status route
-app.get("/health", (req, res) => {
+app.get(`${process.env.API_PREFIX}/health`, (req, res) => {
   const dbConfig = DatabaseConfig.getInstance();
   const dbStatus = dbConfig.getStatus();
 
@@ -56,36 +70,68 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Error logging middleware (must be after routes)
+app.use(errorLoggingMiddleware);
+
 async function startServer() {
   try {
     // Initialize database connection
-    console.log("🚀 Starting Pluto Koi Backend...");
+    logger.info("🚀 Starting Pluto Koi Backend...");
 
     const dbConfig = DatabaseConfig.getInstance();
     await dbConfig.connect();
 
     // Start the server
     app.listen(port, () => {
-      console.log(`🌟 Server running on port ${port}`);
-      console.log(`📊 Health check available at http://localhost:${port}${process.env.API_PREFIX}/health`);
-      console.log(`🔐 Auth endpoints: http://localhost:${port}${process.env.API_PREFIX}/auth`);
+      logger.info(`🌟 Server running on port ${port}`);
+      logger.info(`📊 Health check available at http://localhost:${port}${process.env.API_PREFIX}/health`);
+      logger.info(`🔐 Auth endpoints: http://localhost:${port}${process.env.API_PREFIX}/auth`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    logger.error("❌ Failed to start server", { error: error instanceof Error ? error.message : error });
     process.exit(1);
   }
 }
 
 // Handle unhandled rejections
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  logger.error("Unhandled Rejection", { reason, promise });
   process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error);
+  logger.error("Uncaught Exception", { error: error.message, stack: error.stack });
   process.exit(1);
+});
+
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  logger.info("SIGTERM received, shutting down gracefully");
+
+  try {
+    const dbConfig = DatabaseConfig.getInstance();
+    await dbConfig.disconnect();
+    logger.info("Database connection closed");
+  } catch (error) {
+    logger.error("Error during graceful shutdown", { error });
+  }
+
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  logger.info("SIGINT received, shutting down gracefully");
+
+  try {
+    const dbConfig = DatabaseConfig.getInstance();
+    await dbConfig.disconnect();
+    logger.info("Database connection closed");
+  } catch (error) {
+    logger.error("Error during graceful shutdown", { error });
+  }
+
+  process.exit(0);
 });
 
 // Start the application
