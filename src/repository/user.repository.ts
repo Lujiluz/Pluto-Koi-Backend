@@ -65,8 +65,8 @@ export class UserRepository {
    */
   async deleteById(id: string): Promise<boolean> {
     try {
-      const result = await UserModel.findByIdAndDelete(id);
-      return result !== null;
+      const result = await UserModel.updateOne({ _id: id }, { deleted: true , deletedAt: new Date() });
+      return result.modifiedCount > 0;
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to delete user");
     }

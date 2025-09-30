@@ -14,6 +14,18 @@ class UserController {
       next(error);
     }
   }
+    
+    async deleteUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { id } = req.params;
+            
+            const result = await userService.deleteUserById(id);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            next(error);
+        }
+    }
 }
 
 export const userController = new UserController();

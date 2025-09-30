@@ -13,4 +13,11 @@ router.use(authenticateToken);
  */
 router.get("", userController.getAllUsers.bind(userController));
 
+/**
+ * @route   DELETE /api/user/:id
+ * @desc    Delete user by ID (soft delete)
+ * @access  Private (Admin only)
+ */
+router.delete("/:id", userController.deleteUserById.bind(userController));
+
 export default router;

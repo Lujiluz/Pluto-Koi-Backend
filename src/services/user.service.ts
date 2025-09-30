@@ -37,6 +37,25 @@ class UserService {
       throw new CustomErrorHandler(500, "Failed to retrieve users");
     }
   }
+    
+    async deleteUserById(userId: string): Promise<GeneralResponse<null>> {
+        try {
+            const success = await userRepository.deleteById(userId)
+
+            if (!success) {
+                throw new CustomErrorHandler(404, "User not found or already deleted");
+            }
+
+            return {
+                status: "success",
+                message: "User deleted successfully",
+                data: null,
+            };
+        } catch (error) {
+            console.log("Error deleting user:", error);
+            throw new CustomErrorHandler(500, "Failed to delete user");
+        }
+    }
 }
 
 export const userService = new UserService();
