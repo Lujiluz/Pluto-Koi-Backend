@@ -114,6 +114,30 @@ export class UserRepository {
   }
 
   /**
+   * Get user statistics
+   */
+  async getUserStats(): Promise<{ totalUsers: number, totalUsersTrend: number, totalDeletedUsers: number, totalDeletedUsersTrend: number }> {
+    try {
+      const [totalUsers, totalDeletedUsers] = await Promise.all([
+        UserModel.countDocuments({ deleted: false }),
+        UserModel.countDocuments({ deleted: true }),
+      ]);
+
+      const totalUsersTrend = totalUsers - (await UserModel.countDocuments({ deleted: false, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));
+      const totalDeletedUsersTrend = totalDeletedUsers - (await UserModel.countDocuments({ deleted: true, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));
+
+      return {
+        totalUsers,
+        totalUsersTrend,
+        totalDeletedUsers,
+        totalDeletedUsersTrend,
+      };
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to get user statistics");
+    }
+  }
+
+  /**
    * Find users by role
    */
   async findByRole(role: UserRole): Promise<IUser[]> {

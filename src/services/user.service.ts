@@ -23,39 +23,41 @@ class UserService {
     }
   }
 
-  async getAllUsers(page: number = 1, limit: number = 10): Promise<GeneralResponse<{ users: IUser[]; metadata: any }>> {
+  async getAllUsers(page: number = 1, limit: number = 10): Promise<GeneralResponse<{ users: IUser[]; metadata: any; statistics: any }>> {
     try {
       const { users, metadata } = await userRepository.findAll(page, limit);
+
+      const userStats = await userRepository.getUserStats();
 
       return {
         status: "success",
         message: "Users retrieved successfully",
-        data: { users, metadata },
+        data: { statistics: userStats, users, metadata },
       };
     } catch (error) {
       console.error("Error retrieving users:", error);
       throw new CustomErrorHandler(500, "Failed to retrieve users");
     }
   }
-    
-    async deleteUserById(userId: string): Promise<GeneralResponse<null>> {
-        try {
-            const success = await userRepository.deleteById(userId)
 
-            if (!success) {
-                throw new CustomErrorHandler(404, "User not found or already deleted");
-            }
+  async deleteUserById(userId: string): Promise<GeneralResponse<null>> {
+    try {
+      const success = await userRepository.deleteById(userId);
 
-            return {
-                status: "success",
-                message: "User deleted successfully",
-                data: null,
-            };
-        } catch (error) {
-            console.log("Error deleting user:", error);
-            throw new CustomErrorHandler(500, "Failed to delete user");
-        }
+      if (!success) {
+        throw new CustomErrorHandler(404, "User not found or already deleted");
+      }
+
+      return {
+        status: "success",
+        message: "User deleted successfully",
+        data: null,
+      };
+    } catch (error) {
+      console.log("Error deleting user:", error);
+      throw new CustomErrorHandler(500, "Failed to delete user");
     }
+  }
 }
 
 export const userService = new UserService();
