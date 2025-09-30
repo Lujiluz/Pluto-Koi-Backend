@@ -91,11 +91,11 @@ export class UserRepository {
     try {
       const skip = (page - 1) * limit;
       const [users, total] = await Promise.all([
-        UserModel.find({ role: { $ne: "admin" } })
+        UserModel.find({ role: { $ne: "admin" }, deleted: false }, {name: 1, email: 1, role: 1, createdAt: 1})
           .skip(skip)
           .limit(limit)
           .sort({ createdAt: -1 }),
-        UserModel.countDocuments({ role: { $ne: "admin" } }),
+        UserModel.countDocuments({ role: { $ne: "admin" }, deleted: false }),
       ]);
 
       const metadata = {
