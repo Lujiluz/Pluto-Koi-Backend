@@ -1,10 +1,10 @@
 import { userController } from "#controllers/user.controller.js";
-import { authenticateToken } from "#middleware/auth.middleware.js";
+import { adminRouteAuthentication, authenticateToken } from "#middleware/auth.middleware.js";
 import { Router } from "express";
 
 const router = Router();
 
-router.use(authenticateToken);
+router.use([authenticateToken, adminRouteAuthentication]);
 
 /**
  * @route   GET /api/user

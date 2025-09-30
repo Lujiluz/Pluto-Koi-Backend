@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
+import { UserRole } from "#models/user.model.js";
 
 /**
  * Zod schema for user registration
@@ -19,6 +20,8 @@ export const registerSchema = z.object({
     .min(6, "Password must be at least 6 characters long")
     .max(128, "Password cannot exceed 128 characters")
     .refine((val) => val.length > 0, "Password is required"),
+  
+  role: z.nativeEnum(UserRole).default(UserRole.END_USER),
 });
 
 /**

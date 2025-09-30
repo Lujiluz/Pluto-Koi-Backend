@@ -56,6 +56,24 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
   }
 };
 
+export const adminRouteAuthentication = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userRole = req.user?.role;
+
+    if (userRole !== "admin") {
+      res.status(403).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Authentication middleware error:", error);
+    next(error);
+  }
+};
+
 /**
  * Middleware to check if user has required role
  */
