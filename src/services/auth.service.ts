@@ -3,13 +3,15 @@ import { userRepository } from "#repository/user.repository.js";
 import { AuthResponse, JwtPayload, TokenResponse } from "#interfaces/auth.interface.js";
 import { RegisterInput, LoginInput } from "#validations/auth.validation.js";
 import { IUser } from "#models/user.model.js";
+import { CustomErrorHandler } from "#middleware/errorHandler.js";
+import { success } from "zod";
 
 export class AuthService {
   private readonly jwtSecret: string;
   private readonly jwtExpiresIn: string;
 
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-this-in-production";
+    this.jwtSecret = process.env.JWT_SECRET || "";
     this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
 
     if (!process.env.JWT_SECRET) {

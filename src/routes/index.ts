@@ -1,11 +1,14 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes.js";
 import exampleRoutes from "./example.routes.js";
+import { readdirSync } from "fs";
+import userRoutes from "./user.routes.js";
 
 const router = Router();
 
 // Mount auth routes
 router.use("/auth", authRoutes);
+router.use('/user', userRoutes)
 
 // Mount example routes (for testing authentication)
 router.use("/example", exampleRoutes);

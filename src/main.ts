@@ -70,7 +70,7 @@ app.get(`${process.env.API_PREFIX}/health`, (req, res) => {
   });
 });
 
-// Error logging middleware (must be after routes)
+// Error logging middleware
 app.use(errorLoggingMiddleware);
 
 async function startServer() {

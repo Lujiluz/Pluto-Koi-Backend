@@ -19,3 +19,5 @@ const errorHandler = (err: CustomErrorHandler, req: Request, res: Response, next
         message
     })
 }
+
+export { CustomErrorHandler, errorHandler }

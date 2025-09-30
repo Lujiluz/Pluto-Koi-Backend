@@ -1,8 +1,5 @@
 import { Request } from "express";
-import { IUser } from "#models/user.model.js";
-
-// Note: RegisterRequest and LoginRequest are now defined in validations/auth.validation.ts using Zod
-// Use RegisterInput and LoginInput from there instead
+import { IUser, UserRole } from "#models/user.model.js";
 
 export interface AuthResponse {
   success: boolean;
@@ -25,7 +22,7 @@ export interface AuthenticatedUser {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
 }
 
 export interface AuthenticatedRequest extends Request {

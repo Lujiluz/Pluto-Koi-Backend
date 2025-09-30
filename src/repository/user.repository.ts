@@ -1,3 +1,4 @@
+import { CustomErrorHandler } from "#middleware/errorHandler.js";
 import { UserModel, IUser, UserRole } from "#models/user.model.js";
 
 export interface CreateUserData {
@@ -22,7 +23,7 @@ export class UserRepository {
       const user = new UserModel(userData);
       return await user.save();
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to create user");
     }
   }
 
@@ -33,7 +34,7 @@ export class UserRepository {
     try {
       return await UserModel.findOne({ email: email.toLowerCase() });
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to find user by email");
     }
   }
 
@@ -44,7 +45,7 @@ export class UserRepository {
     try {
       return await UserModel.findById(id);
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to find user by ID");
     }
   }
 
@@ -55,7 +56,7 @@ export class UserRepository {
     try {
       return await UserModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to update user");
     }
   }
 
@@ -67,7 +68,7 @@ export class UserRepository {
       const result = await UserModel.findByIdAndDelete(id);
       return result !== null;
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to delete user");
     }
   }
 
@@ -79,21 +80,36 @@ export class UserRepository {
       const user = await UserModel.findOne({ email: email.toLowerCase() });
       return user !== null;
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to check user existence by email");
     }
   }
 
   /**
    * Get all users (with pagination)
    */
-  async findAll(page: number = 1, limit: number = 10): Promise<{ users: IUser[]; total: number }> {
+  async findAll(page: number = 1, limit: number = 10): Promise<{ users: IUser[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
-      const [users, total] = await Promise.all([UserModel.find({}).skip(skip).limit(limit).sort({ createdAt: -1 }), UserModel.countDocuments({})]);
+      const [users, total] = await Promise.all([
+        UserModel.find({ role: { $ne: "admin" } })
+          .skip(skip)
+          .limit(limit)
+          .sort({ createdAt: -1 }),
+        UserModel.countDocuments({ role: { $ne: "admin" } }),
+      ]);
 
-      return { users, total };
+      const metadata = {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        pageSize: limit,
+        totalItems: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      };
+
+      return { users, metadata };
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to fetch users");
     }
   }
 
@@ -104,7 +120,7 @@ export class UserRepository {
     try {
       return await UserModel.find({ role });
     } catch (error) {
-      throw error;
+      throw new CustomErrorHandler(500, "Failed to find users by role");
     }
   }
 }

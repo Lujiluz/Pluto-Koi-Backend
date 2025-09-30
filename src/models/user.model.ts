@@ -11,6 +11,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: UserRole;
+  deleted: boolean;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -43,11 +45,21 @@ const userSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       default: UserRole.END_USER,
     },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    }
   },
   {
     timestamps: true,
   }
 );
+
+userSchema.index({ deleted: 1 });
 
 // Hash password before saving
 userSchema.pre<IUser>("save", async function (next) {

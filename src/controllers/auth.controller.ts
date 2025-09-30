@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { authService } from "#services/auth.service.js";
 import { RegisterInput, LoginInput } from "#validations/auth.validation.js";
 import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
@@ -8,9 +8,8 @@ export class AuthController {
    * Register a new user
    * Note: Validation is handled by middleware, req.body is already validated and sanitized
    */
-  async register(req: Request, res: Response): Promise<void> {
+  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // At this point, req.body is already validated and sanitized by Zod middleware
       const registerData = req.body as RegisterInput;
 
       // Register user
@@ -23,10 +22,7 @@ export class AuthController {
       }
     } catch (error) {
       console.error("Registration controller error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error during registration",
-      });
+      next(error);
     }
   }
 

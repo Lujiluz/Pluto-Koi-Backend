@@ -1,0 +1,42 @@
+import { GeneralResponse } from "#interfaces/global.interface.js";
+import { CustomErrorHandler } from "#middleware/errorHandler.js";
+import { IUser } from "#models/user.model.js";
+import { CreateUserData, userRepository } from "#repository/user.repository.js";
+
+class UserService {
+  async getUserById(userId: string): Promise<GeneralResponse<IUser | null>> {
+    try {
+      const user = await userRepository.findById(userId);
+
+      if (!user) {
+        throw new CustomErrorHandler(404, "User not found");
+      }
+
+      return {
+        status: "success",
+        message: "User retrieved successfully",
+        data: user,
+      };
+    } catch (error) {
+      console.error("Error retrieving user:", error);
+      throw new CustomErrorHandler(500, "Failed to retrieve user");
+    }
+  }
+
+  async getAllUsers(page: number = 1, limit: number = 10): Promise<GeneralResponse<{ users: IUser[]; metadata: any }>> {
+    try {
+      const { users, metadata } = await userRepository.findAll(page, limit);
+
+      return {
+        status: "success",
+        message: "Users retrieved successfully",
+        data: { users, metadata },
+      };
+    } catch (error) {
+      console.error("Error retrieving users:", error);
+      throw new CustomErrorHandler(500, "Failed to retrieve users");
+    }
+  }
+}
+
+export const userService = new UserService();
