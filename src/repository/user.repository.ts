@@ -1,5 +1,6 @@
 import { CustomErrorHandler } from "#middleware/errorHandler.js";
 import { UserModel, IUser, UserRole } from "#models/user.model.js";
+import { paginationMetadata } from "#utils/pagination.js";
 
 export interface CreateUserData {
   name: string;
@@ -65,7 +66,7 @@ export class UserRepository {
    */
   async deleteById(id: string): Promise<boolean> {
     try {
-      const result = await UserModel.updateOne({ _id: id }, { deleted: true , deletedAt: new Date() });
+      const result = await UserModel.updateOne({ _id: id }, { deleted: true, deletedAt: new Date() });
       return result.modifiedCount > 0;
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to delete user");
@@ -91,21 +92,14 @@ export class UserRepository {
     try {
       const skip = (page - 1) * limit;
       const [users, total] = await Promise.all([
-        UserModel.find({ role: { $ne: "admin" }, deleted: false }, {name: 1, email: 1, role: 1, createdAt: 1})
+        UserModel.find({ role: { $ne: "admin" }, deleted: false }, { name: 1, email: 1, role: 1, createdAt: 1 })
           .skip(skip)
           .limit(limit)
           .sort({ createdAt: -1 }),
         UserModel.countDocuments({ role: { $ne: "admin" }, deleted: false }),
       ]);
 
-      const metadata = {
-        currentPage: page,
-        totalPages: Math.ceil(total / limit),
-        pageSize: limit,
-        totalItems: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      };
+      const metadata = paginationMetadata(page, limit, total);
 
       return { users, metadata };
     } catch (error) {
@@ -116,12 +110,9 @@ export class UserRepository {
   /**
    * Get user statistics
    */
-  async getUserStats(): Promise<{ totalUsers: number, totalUsersTrend: number, totalDeletedUsers: number, totalDeletedUsersTrend: number }> {
+  async getUserStats(): Promise<{ totalUsers: number; totalUsersTrend: number; totalDeletedUsers: number; totalDeletedUsersTrend: number }> {
     try {
-      const [totalUsers, totalDeletedUsers] = await Promise.all([
-        UserModel.countDocuments({ deleted: false }),
-        UserModel.countDocuments({ deleted: true }),
-      ]);
+      const [totalUsers, totalDeletedUsers] = await Promise.all([UserModel.countDocuments({ deleted: false }), UserModel.countDocuments({ deleted: true })]);
 
       const totalUsersTrend = totalUsers - (await UserModel.countDocuments({ deleted: false, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));
       const totalDeletedUsersTrend = totalDeletedUsers - (await UserModel.countDocuments({ deleted: true, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));

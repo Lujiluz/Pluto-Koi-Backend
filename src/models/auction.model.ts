@@ -19,7 +19,7 @@ const auctionSchema = new Schema<IAuction>(
   {
     itemName: { type: String, required: true },
     startPrice: { type: Number, required: true },
-    endPrice: { type: Number, required: true },
+    endPrice: { type: Number, required: true, default: 0 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     media: [
