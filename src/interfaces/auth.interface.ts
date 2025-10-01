@@ -25,8 +25,11 @@ export interface AuthenticatedUser {
   role: UserRole;
 }
 
+// Extended request interface that includes file upload support
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
+  files?: any; // For multer file uploads
+  file?: any; // For single file uploads
 }
 
 export interface TokenResponse {

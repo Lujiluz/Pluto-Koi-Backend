@@ -3,7 +3,18 @@ import { CustomErrorHandler } from "#middleware/errorHandler.js";
 import { AuctionActivityModel } from "#models/auction.activity.model.js";
 import { IAuction } from "#models/auction.model.js";
 import { auctionRepository } from "#repository/auction.repository.js";
+import { processUploadedFiles, UploadedFile, validateFiles } from "#utils/fileUpload.js";
 import { Types } from "mongoose";
+
+export interface CreateAuctionData {
+  itemName: string;
+  startPrice: number;
+  endPrice?: number;
+  startDate: string | Date;
+  endDate: string | Date;
+  highestBid?: number;
+  media?: UploadedFile[];
+}
 
 class AuctionService {
   /**
@@ -54,13 +65,67 @@ class AuctionService {
   }
 
   /**
-   * Create a new auction
-   * @param auctionData - Auction data to create
+   * Create a new auction with media upload support
+   * @param auctionData - Auction data including optional media files
    * @returns A response object containing the created auction
    */
-  async createAuction(auctionData: IAuction): Promise<GeneralResponse<IAuction>> {
+  async createAuction(auctionData: CreateAuctionData): Promise<GeneralResponse<IAuction>> {
     try {
-      const createdAuction = await auctionRepository.create(auctionData);
+      const { media, ...auctionFields } = auctionData;
+
+      // Validate required fields
+      if (!auctionFields.itemName || !auctionFields.startPrice || !auctionFields.startDate || !auctionFields.endDate) {
+        throw new CustomErrorHandler(400, "Missing required fields: itemName, startPrice, startDate, endDate");
+      }
+
+      // Validate dates
+      const startDate = new Date(auctionFields.startDate);
+      const endDate = new Date(auctionFields.endDate);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new CustomErrorHandler(400, "Invalid date format");
+      }
+
+      if (endDate <= startDate) {
+        throw new CustomErrorHandler(400, "End date must be after start date");
+      }
+
+      if (startDate <= new Date()) {
+        throw new CustomErrorHandler(400, "Start date must be in the future");
+      }
+
+      // Validate and process media files if provided
+      let processedMedia: any[] = [];
+      if (media && media.length > 0) {
+        // Validate files
+        const validation = validateFiles(media, 10);
+        if (!validation.isValid) {
+          throw new CustomErrorHandler(400, `File validation failed: ${validation.errors.join(", ")}`);
+        }
+
+        try {
+          // Process and save files
+          processedMedia = await processUploadedFiles(media, "auctions");
+        } catch (error) {
+          console.error("Error processing media files:", error);
+          throw new CustomErrorHandler(500, "Failed to process media files");
+        }
+      }
+
+      // Prepare auction data for database
+      const auctionToCreate = {
+        itemName: auctionFields.itemName,
+        startPrice: Number(auctionFields.startPrice),
+        endPrice: auctionFields.endPrice ? Number(auctionFields.endPrice) : 0,
+        startDate,
+        endDate,
+        highestBid: auctionFields.highestBid ? Number(auctionFields.highestBid) : 0,
+        media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
+      };
+
+      // Create auction in database
+      const createdAuction = await auctionRepository.create(auctionToCreate as IAuction);
+
       return {
         status: "success",
         message: "Auction created successfully",
@@ -68,6 +133,17 @@ class AuctionService {
       };
     } catch (error) {
       console.error("Error creating auction:", error);
+
+      // If it's already a CustomErrorHandler, re-throw it
+      if (error instanceof CustomErrorHandler) {
+        throw error;
+      }
+
+      // Handle validation errors
+      if (error instanceof Error && error.message.includes("validation")) {
+        throw new CustomErrorHandler(400, error.message);
+      }
+
       throw new CustomErrorHandler(500, "Failed to create auction");
     }
   }
