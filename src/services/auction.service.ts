@@ -1,7 +1,9 @@
 import { GeneralResponse } from "#interfaces/global.interface.js";
 import { CustomErrorHandler } from "#middleware/errorHandler.js";
+import { AuctionActivityModel } from "#models/auction.activity.model.js";
 import { IAuction } from "#models/auction.model.js";
 import { auctionRepository } from "#repository/auction.repository.js";
+import { Types } from "mongoose";
 
 class AuctionService {
   /**
@@ -15,6 +17,30 @@ class AuctionService {
       const { auctions, metadata } = await auctionRepository.findAll(page, limit);
 
       const auctionStats = await auctionRepository.getStats();
+
+      if (auctions.length > 0) {
+        const auctionsWithHighestBids = await Promise.all(
+          auctions.map(async (auction) => {
+            const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auction._id as string));
+            return {
+              ...auction.toObject(),
+              currentHighestBid: highestBid ? highestBid.bidAmount : null,
+              currentWinner: highestBid
+                ? {
+                    userId: highestBid.userId,
+                    bidAmount: highestBid.bidAmount,
+                  }
+                : null,
+            };
+          })
+        );
+
+        return {
+          status: "success",
+          message: "Auctions retrieved successfully",
+          data: { statistics: auctionStats, auctions: auctionsWithHighestBids, metadata },
+        };
+      }
 
       return {
         status: "success",
