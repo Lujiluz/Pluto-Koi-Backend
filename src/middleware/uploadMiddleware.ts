@@ -62,36 +62,8 @@ const upload = multer({
 export const uploadAuctionMedia = upload.array("media", 10);
 export const uploadSingleFile = upload.single("file");
 export const uploadMultipleFiles = upload.array("files", 10);
+export const uploadProductMedia = upload.array("media", 10);
 
-// Error handling middleware for multer
-export const handleMulterError = (error: any, req: Request, res: Response, next: NextFunction) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
-        success: false,
-        message: "File size too large. Maximum size is 10MB per file.",
-      });
-    }
-    if (error.code === "LIMIT_FILE_COUNT") {
-      return res.status(400).json({
-        success: false,
-        message: "Too many files. Maximum is 10 files per upload.",
-      });
-    }
-    if (error.code === "LIMIT_UNEXPECTED_FILE") {
-      return res.status(400).json({
-        success: false,
-        message: 'Unexpected file field. Expected field name: "media".',
-      });
-    }
-  }
-
-  if (error.message.includes("Invalid file type")) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-
+export const handleMulterError = (error: any, req: any, res: any, next: any) => {
   next(error);
 };

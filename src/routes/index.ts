@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRoutes from "./auth.routes.js";
 import auctionRoutes from "./auction.routes.js";
 import auctionActivityRoutes from "./auction.activity.routes.js";
+import productRoutes from "./product.routes.js";
 import userRoutes from "./user.routes.js";
 
 const router = Router();
@@ -11,6 +12,7 @@ router.use("/auth", authRoutes);
 router.use("/user", userRoutes);
 router.use("/auction", auctionRoutes);
 router.use("/auction-activity", auctionActivityRoutes);
+router.use("/product", productRoutes);
 
 // Health check for API routes
 router.get("/health", (req, res) => {
@@ -21,6 +23,7 @@ router.get("/health", (req, res) => {
       auth: "/api/pluto-koi/v1/auth",
       auction: "/api/pluto-koi/v1/auction",
       auctionActivity: "/api/pluto-koi/v1/auction-activity",
+      product: "/api/pluto-koi/v1/product",
       user: "/api/pluto-koi/v1/user",
     },
     timestamp: new Date().toISOString(),
