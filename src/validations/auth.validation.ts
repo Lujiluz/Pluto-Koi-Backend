@@ -67,12 +67,14 @@ export const validateRequestBody = <T>(schema: z.ZodSchema<T>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       const validatedData = schema.parse(req.body);
+      console.log('Validated data:', validatedData);
 
       // Replace req.body with validated and sanitized data
       req.body = validatedData;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('Validation error:', error);
         const errors = error.issues.map((issue) => {
           const path = issue.path.join(".");
           return path ? `${path}: ${issue.message}` : issue.message;
@@ -114,12 +116,14 @@ export class AuthValidator {
   static validateRegister(data: any) {
     try {
       const validated = registerSchema.parse(data);
+      console.log('Validated register data:', validated);
       return {
         isValid: true,
         errors: [],
         data: validated,
       };
     } catch (error) {
+      console.error('Validation error:', error);
       if (error instanceof z.ZodError) {
         return {
           isValid: false,

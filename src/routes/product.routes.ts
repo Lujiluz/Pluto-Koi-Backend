@@ -7,7 +7,7 @@ import { validateCreateProduct, validateUpdateProduct, validateProductId, valida
 const router = Router();
 
 // All routes require authentication
-router.use(authenticateToken);
+// router.use(authenticateToken);
 
 /**
  * @route   GET /api/product

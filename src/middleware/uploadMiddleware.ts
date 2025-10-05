@@ -63,6 +63,7 @@ export const uploadAuctionMedia = upload.array("media", 10);
 export const uploadSingleFile = upload.single("file");
 export const uploadMultipleFiles = upload.array("files", 10);
 export const uploadProductMedia = upload.array("media", 10);
+export const uploadGalleryMedia = upload.array("media", 20); // Allow up to 20 files for galleries
 
 export const handleMulterError = (error: any, req: any, res: any, next: any) => {
   next(error);
