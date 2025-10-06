@@ -15,7 +15,7 @@ export class AuthController {
       // Register user
       const result = await authService.register(registerData);
 
-      if (result.success) {
+      if (result.status === "success") {
         res.status(201).json(result);
       } else {
         res.status(400).json(result);
@@ -38,7 +38,7 @@ export class AuthController {
       // Login user
       const result = await authService.login(loginData);
 
-      if (result.success) {
+      if (result.status === "success") {
         res.status(200).json(result);
       } else {
         res.status(401).json(result);

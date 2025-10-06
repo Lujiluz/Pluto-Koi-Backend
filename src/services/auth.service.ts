@@ -28,7 +28,7 @@ export class AuthService {
       const existingUser = await userRepository.existsByEmail(registerData.email);
       if (existingUser) {
         return {
-          success: false,
+          status: "error",
           message: "User with this email already exists",
         };
       }
@@ -45,7 +45,7 @@ export class AuthService {
       const tokenData = this.generateToken(user);
 
       return {
-        success: true,
+        status: "success",
         message: "User registered successfully",
         data: {
           user: user.toJSON() as Omit<IUser, "password">,
@@ -55,7 +55,7 @@ export class AuthService {
     } catch (error) {
       console.error("Registration error:", error);
       return {
-        success: false,
+        status: "error",
         message: "Registration failed. Please try again.",
       };
     }
@@ -70,7 +70,7 @@ export class AuthService {
       const user = await userRepository.findByEmail(loginData.email);
       if (!user) {
         return {
-          success: false,
+          status: "error",
           message: "Invalid email or password",
         };
       }
@@ -79,7 +79,7 @@ export class AuthService {
       const isPasswordValid = await user.comparePassword(loginData.password);
       if (!isPasswordValid) {
         return {
-          success: false,
+          status: "success",
           message: "Invalid email or password",
         };
       }
@@ -88,7 +88,7 @@ export class AuthService {
       const tokenData = this.generateToken(user);
 
       return {
-        success: true,
+        status: "success",
         message: "Login successful",
         data: {
           user: user.toJSON() as Omit<IUser, "password">,
@@ -98,7 +98,7 @@ export class AuthService {
     } catch (error) {
       console.error("Login error:", error);
       return {
-        success: false,
+        status: "error",
         message: "Login failed. Please try again.",
       };
     }

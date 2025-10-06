@@ -2,7 +2,7 @@ import { Request } from "express";
 import { IUser, UserRole } from "#models/user.model.js";
 
 export interface AuthResponse {
-  success: boolean;
+  status: string;
   message: string;
   data?: {
     user: Omit<IUser, "password">;
