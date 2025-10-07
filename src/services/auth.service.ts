@@ -69,19 +69,13 @@ export class AuthService {
       // Find user by email
       const user = await userRepository.findByEmail(loginData.email);
       if (!user) {
-        return {
-          status: "error",
-          message: "Invalid email or password",
-        };
+        throw new CustomErrorHandler(401, "Invalid email or password");
       }
 
       // Check password
       const isPasswordValid = await user.comparePassword(loginData.password);
       if (!isPasswordValid) {
-        return {
-          status: "success",
-          message: "Invalid email or password",
-        };
+        throw new CustomErrorHandler(401, "Invalid email or password");
       }
 
       // Generate JWT token
@@ -97,10 +91,12 @@ export class AuthService {
       };
     } catch (error) {
       console.error("Login error:", error);
-      return {
-        status: "error",
-        message: "Login failed. Please try again.",
-      };
+
+      if (error instanceof CustomErrorHandler) {
+        throw error;
+      }
+
+      throw new CustomErrorHandler(500, "Login failed. Please try again.");
     }
   }
 
