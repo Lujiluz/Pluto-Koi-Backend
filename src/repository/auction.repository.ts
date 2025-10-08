@@ -76,6 +76,20 @@ class AuctionRepository {
       throw new CustomErrorHandler(500, "Failed to delete auction");
     }
   }
+
+  /**
+   * Update an auction by ID
+   * @param id - Auction ID
+   * @param updateData - Data to update
+   * @returns The updated auction or null if not found
+   */
+  async update(id: string, updateData: Partial<IAuction>): Promise<IAuction | null> {
+    try {
+      return await AuctionModel.findByIdAndUpdate(id, updateData, { new: true });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to update auction");
+    }
+  }
 }
 
 export const auctionRepository = new AuctionRepository();

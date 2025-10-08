@@ -42,4 +42,11 @@ router.get("/:id", validateAuctionId, auctionController.getAuctionById.bind(auct
  */
 router.delete("/:id", validateAuctionId, auctionController.deleteAuctionById.bind(auctionController));
 
+/**
+ * @route   PUT /api/auction/:id
+ * @desc    Update auction by ID
+ * @access  Private
+ */
+router.put("/:id", uploadAuctionMedia, handleMulterError, validateAuctionId, auctionController.updateAuction.bind(auctionController));
+
 export default router;

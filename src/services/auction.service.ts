@@ -197,6 +197,63 @@ class AuctionService {
       throw new CustomErrorHandler(500, "Failed to delete auction");
     }
   }
+
+  /**
+   * Update an auction by ID
+   * @param auctionId - Auction ID
+   * @param updatedData - Data to update
+   * @returns The updated auction
+   */
+  async updateAuction(auctionId: string, updatedData: Partial<CreateAuctionData>): Promise<GeneralResponse<any>> {
+    try {
+      console.log('updatedData:', updatedData);
+      const auction = await auctionRepository.findById(auctionId);
+
+      if (!auction) {
+        throw new CustomErrorHandler(404, "Auction not found");
+      }
+
+      // Update fields
+      if (updatedData.itemName !== undefined) auction.itemName = updatedData.itemName;
+      if (updatedData.startPrice !== undefined) auction.startPrice = updatedData.startPrice;
+      if (updatedData.endPrice !== undefined) auction.endPrice = updatedData.endPrice;
+      if (updatedData.startDate !== undefined) auction.startDate = new Date(updatedData.startDate);
+      if (updatedData.endDate !== undefined) auction.endDate = new Date(updatedData.endDate);
+      if (updatedData.highestBid !== undefined) auction.highestBid = updatedData.highestBid;
+
+      // media update handling
+      if (updatedData.media && updatedData.media.length > 0) {
+        const validation = validateFiles(updatedData.media, 10);
+        if (!validation.isValid) {
+          throw new CustomErrorHandler(400, `File validation failed: ${validation.errors.join(", ")}`);
+        }
+
+        try {
+          const processedMedia = await processUploadedFiles(updatedData.media, "auctions");
+          auction.media = processedMedia.map((file) => ({ fileUrl: file.fileUrl }));
+        } catch (error) {
+          console.error("Error processing media files:", error);
+          throw new CustomErrorHandler(500, "Failed to process media files");
+        }
+      }
+
+      const savedAuction = await auctionRepository.update(auctionId, auction);
+
+      return {
+        status: "success",
+        message: "Auction updated successfully",
+        data: savedAuction,
+      };
+    } catch (error) {
+      console.error("Error updating auction:", error);
+
+      if (error instanceof CustomErrorHandler) {
+        throw error;
+      }
+
+      throw new CustomErrorHandler(500, "Failed to update auction");
+    }
+  }
 }
 
 export const auctionService = new AuctionService();

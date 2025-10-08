@@ -34,10 +34,8 @@ class AuctionController {
       // Handle uploaded files
       let mediaFiles: UploadedFile[] = [];
 
-      // Check if files were uploaded (this depends on your multer configuration)
       if (req.files) {
         if (Array.isArray(req.files)) {
-          // If using upload.array()
           mediaFiles = req.files.map((file) => ({
             originalname: file.originalname,
             filename: file.filename,
@@ -47,7 +45,6 @@ class AuctionController {
             buffer: file.buffer,
           }));
         } else if (typeof req.files === "object") {
-          // If using upload.fields() - assuming 'media' field
           const mediaField = (req.files as any)["media"];
           if (mediaField && Array.isArray(mediaField)) {
             mediaFiles = mediaField.map((file) => ({
@@ -102,6 +99,62 @@ class AuctionController {
       res.status(200).json(result);
     } catch (error) {
       console.error("Error deleting auction:", error);
+      next(error);
+    }
+  }
+
+  async updateAuction(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      // Extract form data
+      console.log('req.body:', req.body);
+      const { itemName, startPrice, endPrice, startDate, endDate, highestBid } = req.body;
+
+      // Handle uploaded files
+      let mediaFiles: UploadedFile[] = [];
+
+      if (req.files) {
+        if (Array.isArray(req.files)) {
+          mediaFiles = req.files.map((file) => ({
+            originalname: file.originalname,
+            filename: file.filename,
+            path: file.path,
+            size: file.size,
+            mimetype: file.mimetype,
+            buffer: file.buffer,
+          }));
+        } else if (typeof req.files === "object") {
+          const mediaField = (req.files as any)["media"];
+          if (mediaField && Array.isArray(mediaField)) {
+            mediaFiles = mediaField.map((file) => ({
+              originalname: file.originalname,
+              filename: file.filename,
+              path: file.path,
+              size: file.size,
+              mimetype: file.mimetype,
+              buffer: file.buffer,
+            }));
+          }
+        }
+      }
+
+      // Prepare auction data
+      const auctionData: Partial<CreateAuctionData> = {
+        itemName,
+        startPrice: parseFloat(startPrice),
+        endPrice: endPrice ? parseFloat(endPrice) : undefined,
+        startDate,
+        endDate,
+        highestBid: highestBid ? parseFloat(highestBid) : undefined,
+        media: mediaFiles.length > 0 ? mediaFiles : undefined,
+      };
+
+      console.log('auctionData in controller:', auctionData);
+
+      const response = await auctionService.updateAuction(id, auctionData);
+      res.status(200).json(response);
+    } catch (error) {
+      console.error("Error updating auction:", error);
       next(error);
     }
   }
