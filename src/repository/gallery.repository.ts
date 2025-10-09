@@ -97,7 +97,7 @@ export class GalleryRepository {
 
       // Search by gallery name
       if (filters.search) {
-        query.galleryName = { $regex: filters.search, $options: "i" };
+        query['$text'] = { $search: filters.search };
       }
 
       // Filter by owner

@@ -33,4 +33,6 @@ const auctionSchema = new Schema<IAuction>(
   { timestamps: true }
 );
 
+auctionSchema.index({'itemName': 'text'})
+
 export const AuctionModel = model<IAuction>("Auction", auctionSchema);

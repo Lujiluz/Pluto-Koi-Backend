@@ -155,7 +155,7 @@ export class GalleryService {
         throw new CustomErrorHandler(404, "Gallery not found");
       }
 
-      const { media, keepExistingMedia = false, ...galleryFields } = updateData;
+      const { media, keepExistingMedia = true, ...galleryFields } = updateData;
 
       // Validate gallery name uniqueness if being updated
       if (galleryFields.galleryName) {
@@ -176,17 +176,17 @@ export class GalleryService {
         }
 
         try {
+          // delete old files
+          existingGallery.media.forEach((media) => {
+            const filePath = media.fileUrl.replace(process.env.BASE_URL || "", "public");
+            deleteFile(filePath);
+          });
+
           // Process new files
           const processedMedia = await processUploadedFiles(media, "gallery");
 
-          if (keepExistingMedia) {
-            // Append new media to existing
-            finalMedia = [...existingGallery.media, ...processedMedia.map((file) => ({ fileUrl: file.fileUrl }))];
-          } else {
-            // Replace all media with new files
-            // Note: In production, you might want to delete old files
-            finalMedia = processedMedia.map((file) => ({ fileUrl: file.fileUrl }));
-          }
+          // Replace all media with new files
+          finalMedia = processedMedia.map((file) => ({ fileUrl: file.fileUrl }));
         } catch (error) {
           console.error("Error processing media files:", error);
           throw new CustomErrorHandler(500, "Failed to process media files");
@@ -198,6 +198,8 @@ export class GalleryService {
         ...galleryFields,
         media: finalMedia,
       };
+
+      console.log("updatePayload: ", updatePayload);
 
       // Remove undefined values
       Object.keys(updatePayload).forEach((key) => {

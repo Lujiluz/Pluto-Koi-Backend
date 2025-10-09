@@ -27,4 +27,6 @@ const productSchema = new Schema<IProduct>(
   { timestamps: true }
 );
 
+productSchema.index({ 'productName': 'text' });
+
 export const ProductModel = model<IProduct>("Product", productSchema);

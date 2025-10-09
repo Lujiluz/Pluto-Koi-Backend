@@ -95,7 +95,7 @@ export class ProductRepository {
 
       // Search by product name
       if (filters.search) {
-        query.productName = { $regex: filters.search, $options: "i" };
+        query["$text"] = { $search: filters.search };
       }
 
       const [products, total] = await Promise.all([ProductModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit), ProductModel.countDocuments(query)]);
@@ -104,6 +104,7 @@ export class ProductRepository {
 
       return { products, metadata };
     } catch (error) {
+      console.log('[PRODUCT_REPOSITORY]', error);
       throw new CustomErrorHandler(500, "Failed to fetch products");
     }
   }

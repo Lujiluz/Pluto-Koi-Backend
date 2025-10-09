@@ -23,9 +23,9 @@ class AuctionService {
    * @param limit - Number of auctions per page
    * @returns A response object containing auctions, metadata, and statistics
    */
-  async getAllAuctions(page: number = 1, limit: number = 10): Promise<GeneralResponse<{ auctions: IAuction[]; metadata: any; statistics: any }>> {
+  async getAllAuctions(page: number = 1, limit: number = 10, search: string = ''): Promise<GeneralResponse<{ auctions: IAuction[]; metadata: any; statistics: any }>> {
     try {
-      const { auctions, metadata } = await auctionRepository.findAll(page, limit);
+      const { auctions, metadata } = await auctionRepository.findAll(page, limit, search);
 
       const auctionStats = await auctionRepository.getStats();
 

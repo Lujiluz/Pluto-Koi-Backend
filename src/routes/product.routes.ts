@@ -86,6 +86,6 @@ router.delete("/:id", validateProductId, productController.deleteProduct.bind(pr
  * @desc    Permanently delete product by ID (admin only)
  * @access  Private (Admin only)
  */
-router.delete("/:id/permanent", validateProductId, requireAdmin, productController.permanentlyDeleteProduct.bind(productController));
+router.delete("/:id/permanent", authenticateToken, validateProductId, requireAdmin, productController.permanentlyDeleteProduct.bind(productController));
 
 export default router;

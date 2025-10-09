@@ -48,9 +48,9 @@ export const getGalleriesQuerySchema = z.object({
     .transform((val) => val.toLowerCase() === "true")
     .optional(),
 
-  search: z.string().min(1, "Search term cannot be empty").max(100, "Search term must not exceed 100 characters").trim().optional(),
+  search: z.string().max(100, "Search term must not exceed 100 characters").trim().optional(),
 
-  owner: z.string().min(1, "Owner name cannot be empty").max(50, "Owner name must not exceed 50 characters").trim().optional(),
+  owner: z.string().max(50, "Owner name must not exceed 50 characters").trim().optional(),
 });
 
 // Search galleries validation schema

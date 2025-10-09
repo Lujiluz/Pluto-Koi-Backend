@@ -32,11 +32,16 @@ class AuctionRepository {
    * @param limit - Number of auctions per page
    * @returns A list of auctions and metadata
    */
-  async findAll(page: number = 1, limit: number = 10): Promise<{ auctions: IAuction[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, search: string = ''): Promise<{ auctions: IAuction[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
-      const auctions = await AuctionModel.find().skip(skip).limit(limit).exec();
-      const total = await AuctionModel.countDocuments().exec();
+      let query = {}
+
+      if (search) {
+        query = { $text: { $search: search } };
+      }
+      const auctions = await AuctionModel.find(query).skip(skip).limit(limit).exec();
+      const total = await AuctionModel.countDocuments(query).exec();
       const metadata = paginationMetadata(page, limit, total);
       return { auctions, metadata };
     } catch (error) {

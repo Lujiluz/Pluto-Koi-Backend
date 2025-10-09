@@ -87,6 +87,8 @@ export class GalleryController {
         media: files,
       };
 
+      console.log("serviceData: ", serviceData);
+
       const result = await galleryService.updateGallery(galleryId, serviceData);
 
       res.status(200).json(result);

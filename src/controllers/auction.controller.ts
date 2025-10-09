@@ -6,7 +6,10 @@ import { UploadedFile } from "#utils/fileUpload.js";
 class AuctionController {
   async getAllAuctions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const response = await auctionService.getAllAuctions();
+      const {page, limit, search} = req.query as {page?: string, limit?: string, search?: string};
+      const pageNumber = page ? parseInt(page, 10) : 1;
+      const limitNumber = limit ? parseInt(limit, 10) : 10;
+      const response = await auctionService.getAllAuctions(pageNumber, limitNumber, search || '');
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving auctions:", error);

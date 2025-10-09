@@ -29,4 +29,6 @@ const gallerySchema = new Schema<IGallery>(
   { timestamps: true }
 );
 
+gallerySchema.index({ 'galleryName': 'text', 'owner': 'text', 'handling': 'text' });
+
 export const GalleryModel = model<IGallery>("Gallery", gallerySchema);
