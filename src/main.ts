@@ -1,8 +1,10 @@
 import express from "express";
-import { DatabaseConfig } from "#config/database.js";
-import apiRoutes from "#routes/index.js";
-import { skipLogging, errorLoggingMiddleware, performanceLoggingMiddleware, developmentLoggingMiddleware } from "#middleware/logging.middleware.js";
-import { logger } from "#utils/logger.js";
+import { DatabaseConfig } from "./config/database.js";
+import apiRoutes from "./routes/index.js";
+import { skipLogging, errorLoggingMiddleware, performanceLoggingMiddleware, developmentLoggingMiddleware } from "./middleware/logging.middleware.js";
+import { logger } from "./utils/logger.js";
+import { config } from "dotenv";
+config();
 
 const app = express();
 const port = process.env.PORT ?? "3000";
@@ -40,38 +42,38 @@ app.use((req, res, next) => {
 app.use("/media", express.static("public/media"));
 
 // Root route
-app.get("/", (req, res) => {
-  res.json({
-    message: "Pluto Koi Backend API",
-    status: "running",
-    version: "1.0.0",
-    endpoints: {
-      auth: "/api/auth",
-      health: "/api/health",
-    },
-    timestamp: new Date().toISOString(),
-  });
-});
+// app.get("/", (req, res) => {
+//   res.json({
+//     message: "Pluto Koi Backend API",
+//     status: "running",
+//     version: "1.0.0",
+//     endpoints: {
+//       auth: "/api/auth",
+//       health: "/api/health",
+//     },
+//     timestamp: new Date().toISOString(),
+//   });
+// });
 
 // API routes
 app.use(`${process.env.API_PREFIX}`, apiRoutes);
 
 // Database status route
-app.get(`${process.env.API_PREFIX}/health`, (req, res) => {
-  const dbConfig = DatabaseConfig.getInstance();
-  const dbStatus = dbConfig.getStatus();
+// app.get(`${process.env.API_PREFIX}/health`, (req, res) => {
+//   const dbConfig = DatabaseConfig.getInstance();
+//   const dbStatus = dbConfig.getStatus();
 
-  res.json({
-    api: "healthy",
-    database: {
-      connected: dbStatus.isConnected,
-      readyState: dbStatus.readyState,
-      host: dbStatus.host,
-      name: dbStatus.name,
-    },
-    timestamp: new Date().toISOString(),
-  });
-});
+//   res.json({
+//     api: "healthy",
+//     database: {
+//       connected: dbStatus.isConnected,
+//       readyState: dbStatus.readyState,
+//       host: dbStatus.host,
+//       name: dbStatus.name,
+//     },
+//     timestamp: new Date().toISOString(),
+//   });
+// });
 
 // Error logging middleware
 app.use(errorLoggingMiddleware);
@@ -87,8 +89,8 @@ async function startServer() {
     // Start the server
     app.listen(port, () => {
       logger.info(`🌟 Server running on port ${port}`);
-      logger.info(`📊 Health check available at http://localhost:${port}${process.env.API_PREFIX}/health`);
-      logger.info(`🔐 Auth endpoints: http://localhost:${port}${process.env.API_PREFIX}/auth`);
+      // logger.info(`📊 Health check available at http://localhost:${port}${process.env.API_PREFIX}/health`);
+      // logger.info(`🔐 Auth endpoints: http://localhost:${port}${process.env.API_PREFIX}/auth`);
     });
   } catch (error) {
     logger.error("❌ Failed to start server", { error: error instanceof Error ? error.message : error });

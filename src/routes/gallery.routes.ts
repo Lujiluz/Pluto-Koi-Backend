@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { galleryController } from "#controllers/gallery.controller.js";
-import { authenticateToken, requireRole } from "#middleware/auth.middleware.js";
-import { uploadGalleryMedia, handleMulterError } from "#middleware/uploadMiddleware.js";
+import { galleryController } from "../controllers/gallery.controller.js";
+import { authenticateToken, requireRole } from "../middleware/auth.middleware.js";
+import { uploadGalleryMedia, handleMulterError } from "../middleware/uploadMiddleware.js";
 
 const router = Router();
 

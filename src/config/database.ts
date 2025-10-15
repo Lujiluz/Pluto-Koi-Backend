@@ -1,6 +1,6 @@
 // Note: You'll need to install mongoose first: npm install mongoose @types/mongoose
 import mongoose from "mongoose";
-import { DatabaseConnectionOptions, DatabaseStatus, DatabaseError, ConnectionManager, defaultConnectionOptions } from "#utils/database.js";
+import { DatabaseConnectionOptions, DatabaseStatus, DatabaseError, ConnectionManager, defaultConnectionOptions } from "../utils/database.js";
 
 export class DatabaseConfig {
   private static instance: DatabaseConfig;
@@ -9,7 +9,7 @@ export class DatabaseConfig {
   private isInitialized = false;
 
   private constructor() {
-      this.connectionString = process.env.MONGO_URI || "";
+    this.connectionString = process.env.MONGO_URI || "";
     if (!this.connectionString) {
       throw new DatabaseError("MONGO_URI environment variable is not defined");
     }
@@ -54,7 +54,7 @@ export class DatabaseConfig {
   private setupConnectionEventHandlers(): void {
     if (!this.mongoose) return;
 
-      // Handle connection events
+    // Handle connection events
     this.mongoose.connection.on("error", (error: Error) => {
       console.error("❌ MongoDB connection error:", error.message);
     });

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
 
 export interface LogContext {
   requestId: string;

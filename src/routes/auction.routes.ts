@@ -1,7 +1,7 @@
-import { auctionController } from "#controllers/auction.controller.js";
-import { authenticateToken } from "#middleware/auth.middleware.js";
-import { uploadAuctionMedia, handleMulterError } from "#middleware/uploadMiddleware.js";
-import { validateCreateAuction, validateAuctionId, validateAuctionPagination } from "#validations/auction.validation.js";
+import { auctionController } from "../controllers/auction.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
+import { uploadAuctionMedia, handleMulterError } from "../middleware/uploadMiddleware.js";
+import { validateCreateAuction, validateAuctionId, validateAuctionPagination } from "../validations/auction.validation.js";
 import { Router } from "express";
 
 const router = Router();

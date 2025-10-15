@@ -1,9 +1,9 @@
-import { GeneralResponse } from "#interfaces/global.interface.js";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { AuctionActivityModel } from "#models/auction.activity.model.js";
-import { IAuction } from "#models/auction.model.js";
-import { auctionRepository } from "#repository/auction.repository.js";
-import { processUploadedFiles, UploadedFile, validateFiles } from "#utils/fileUpload.js";
+import { GeneralResponse } from "../interfaces/global.interface.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { AuctionActivityModel } from "../models/auction.activity.model.js";
+import { IAuction } from "../models/auction.model.js";
+import { auctionRepository } from "../repository/auction.repository.js";
+import { processUploadedFiles, UploadedFile, validateFiles } from "../utils/fileUpload.js";
 import { Types } from "mongoose";
 
 export interface CreateAuctionData {
@@ -23,7 +23,7 @@ class AuctionService {
    * @param limit - Number of auctions per page
    * @returns A response object containing auctions, metadata, and statistics
    */
-  async getAllAuctions(page: number = 1, limit: number = 10, search: string = ''): Promise<GeneralResponse<{ auctions: IAuction[]; metadata: any; statistics: any }>> {
+  async getAllAuctions(page: number = 1, limit: number = 10, search: string = ""): Promise<GeneralResponse<{ auctions: IAuction[]; metadata: any; statistics: any }>> {
     try {
       const { auctions, metadata } = await auctionRepository.findAll(page, limit, search);
 
@@ -206,7 +206,7 @@ class AuctionService {
    */
   async updateAuction(auctionId: string, updatedData: Partial<CreateAuctionData>): Promise<GeneralResponse<any>> {
     try {
-      console.log('updatedData:', updatedData);
+      console.log("updatedData:", updatedData);
       const auction = await auctionRepository.findById(auctionId);
 
       if (!auction) {

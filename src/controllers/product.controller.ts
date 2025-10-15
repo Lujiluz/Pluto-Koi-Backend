@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
-import { productService, CreateProductServiceData, UpdateProductServiceData } from "#services/product.service.js";
-import { UploadedFile } from "#utils/fileUpload.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { productService, CreateProductServiceData, UpdateProductServiceData } from "../services/product.service.js";
+import { UploadedFile } from "../utils/fileUpload.js";
 
 export class ProductController {
   /**

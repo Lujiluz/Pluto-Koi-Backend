@@ -1,6 +1,6 @@
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { GalleryModel, IGallery } from "#models/gallery.model.js";
-import { paginationMetadata } from "#utils/pagination.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { GalleryModel, IGallery } from "../models/gallery.model.js";
+import { paginationMetadata } from "../utils/pagination.js";
 
 export interface CreateGalleryData {
   galleryName: string;
@@ -97,7 +97,7 @@ export class GalleryRepository {
 
       // Search by gallery name
       if (filters.search) {
-        query['$text'] = { $search: filters.search };
+        query["$text"] = { $search: filters.search };
       }
 
       // Filter by owner

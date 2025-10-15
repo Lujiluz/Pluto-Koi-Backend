@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
-import { auctionActivityService, BidData } from "#services/auction.activity.service.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { auctionActivityService, BidData } from "../services/auction.activity.service.js";
 
 export class AuctionActivityController {
   /**

@@ -1,15 +1,15 @@
 import { NextFunction, Request, Response } from "express";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
-import { auctionService, CreateAuctionData } from "#services/auction.service.js";
-import { UploadedFile } from "#utils/fileUpload.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { auctionService, CreateAuctionData } from "../services/auction.service.js";
+import { UploadedFile } from "../utils/fileUpload.js";
 
 class AuctionController {
   async getAllAuctions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const {page, limit, search} = req.query as {page?: string, limit?: string, search?: string};
+      const { page, limit, search } = req.query as { page?: string; limit?: string; search?: string };
       const pageNumber = page ? parseInt(page, 10) : 1;
       const limitNumber = limit ? parseInt(limit, 10) : 10;
-      const response = await auctionService.getAllAuctions(pageNumber, limitNumber, search || '');
+      const response = await auctionService.getAllAuctions(pageNumber, limitNumber, search || "");
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving auctions:", error);
@@ -110,7 +110,7 @@ class AuctionController {
     try {
       const { id } = req.params;
       // Extract form data
-      console.log('req.body:', req.body);
+      console.log("req.body:", req.body);
       const { itemName, startPrice, endPrice, startDate, endDate, highestBid } = req.body;
 
       // Handle uploaded files
@@ -152,7 +152,7 @@ class AuctionController {
         media: mediaFiles.length > 0 ? mediaFiles : undefined,
       };
 
-      console.log('auctionData in controller:', auctionData);
+      console.log("auctionData in controller:", auctionData);
 
       const response = await auctionService.updateAuction(id, auctionData);
       res.status(200).json(response);

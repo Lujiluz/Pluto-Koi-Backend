@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { authService } from "#services/auth.service.js";
-import { RegisterInput, LoginInput } from "#validations/auth.validation.js";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
+import { authService } from "../services/auth.service.js";
+import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
 
 export class AuthController {
   /**

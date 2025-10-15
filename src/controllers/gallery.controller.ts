@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { galleryService } from "#services/gallery.service.js";
-import { validateCreateGallery, validateUpdateGallery, validateGetGalleriesQuery, validateSearchGalleries, validateGalleriesByOwner, validateGalleryId, validateFeaturedGalleriesQuery } from "#validations/gallery.validation.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { galleryService } from "../services/gallery.service.js";
+import { validateCreateGallery, validateUpdateGallery, validateGetGalleriesQuery, validateSearchGalleries, validateGalleriesByOwner, validateGalleryId, validateFeaturedGalleriesQuery } from "../validations/gallery.validation.js";
 
 export class GalleryController {
   /**

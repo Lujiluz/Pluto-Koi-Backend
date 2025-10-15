@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-import { userRepository } from "#repository/user.repository.js";
-import { AuthResponse, JwtPayload, TokenResponse } from "#interfaces/auth.interface.js";
-import { RegisterInput, LoginInput } from "#validations/auth.validation.js";
-import { IUser } from "#models/user.model.js";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
+import { userRepository } from "../repository/user.repository.js";
+import { AuthResponse, JwtPayload, TokenResponse } from "../interfaces/auth.interface.js";
+import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
+import { IUser } from "../models/user.model.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
 import { success } from "zod";
 
 export class AuthService {

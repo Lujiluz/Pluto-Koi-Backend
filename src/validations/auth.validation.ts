@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
-import { UserRole } from "#models/user.model.js";
+import { UserRole } from "../models/user.model.js";
 
 /**
  * Zod schema for user registration
@@ -20,7 +20,7 @@ export const registerSchema = z.object({
     .min(6, "Password must be at least 6 characters long")
     .max(128, "Password cannot exceed 128 characters")
     .refine((val) => val.length > 0, "Password is required"),
-  
+
   role: z.nativeEnum(UserRole).default(UserRole.END_USER),
 });
 
@@ -67,14 +67,14 @@ export const validateRequestBody = <T>(schema: z.ZodSchema<T>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       const validatedData = schema.parse(req.body);
-      console.log('Validated data:', validatedData);
+      console.log("Validated data:", validatedData);
 
       // Replace req.body with validated and sanitized data
       req.body = validatedData;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error('Validation error:', error);
+        console.error("Validation error:", error);
         const errors = error.issues.map((issue) => {
           const path = issue.path.join(".");
           return path ? `${path}: ${issue.message}` : issue.message;
@@ -116,14 +116,14 @@ export class AuthValidator {
   static validateRegister(data: any) {
     try {
       const validated = registerSchema.parse(data);
-      console.log('Validated register data:', validated);
+      console.log("Validated register data:", validated);
       return {
         isValid: true,
         errors: [],
         data: validated,
       };
     } catch (error) {
-      console.error('Validation error:', error);
+      console.error("Validation error:", error);
       if (error instanceof z.ZodError) {
         return {
           isValid: false,

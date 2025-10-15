@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { auctionActivityController } from "#controllers/auction.activity.controller.js";
-import { authenticateToken, requireAdmin } from "#middleware/auth.middleware.js";
-import { validatePlaceBid, validateAuctionIdParam, validatePaginationQuery } from "#validations/auction.activity.validation.js";
+import { auctionActivityController } from "../controllers/auction.activity.controller.js";
+import { authenticateToken, requireAdmin } from "../middleware/auth.middleware.js";
+import { validatePlaceBid, validateAuctionIdParam, validatePaginationQuery } from "../validations/auction.activity.validation.js";
 
 const router = Router();
 

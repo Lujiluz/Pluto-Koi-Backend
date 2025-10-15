@@ -1,8 +1,8 @@
-import { GeneralResponse } from "#interfaces/global.interface.js";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { IProduct } from "#models/product.model.js";
-import { productRepository, CreateProductData, UpdateProductData } from "#repository/product.repository.js";
-import { processUploadedFiles, UploadedFile, validateFiles, deleteFile } from "#utils/fileUpload.js";
+import { GeneralResponse } from "../interfaces/global.interface.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { IProduct } from "../models/product.model.js";
+import { productRepository, CreateProductData, UpdateProductData } from "../repository/product.repository.js";
+import { processUploadedFiles, UploadedFile, validateFiles, deleteFile } from "../utils/fileUpload.js";
 
 export interface CreateProductServiceData {
   productName: string;

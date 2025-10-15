@@ -1,6 +1,6 @@
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { AuctionModel, IAuction } from "#models/auction.model.js";
-import { paginationMetadata } from "#utils/pagination.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { AuctionModel, IAuction } from "../models/auction.model.js";
+import { paginationMetadata } from "../utils/pagination.js";
 
 class AuctionRepository {
   /**
@@ -32,10 +32,10 @@ class AuctionRepository {
    * @param limit - Number of auctions per page
    * @returns A list of auctions and metadata
    */
-  async findAll(page: number = 1, limit: number = 10, search: string = ''): Promise<{ auctions: IAuction[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, search: string = ""): Promise<{ auctions: IAuction[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
-      let query = {}
+      let query = {};
 
       if (search) {
         query = { $text: { $search: search } };

@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
-import { authService } from "#services/auth.service.js";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
+import { authService } from "../services/auth.service.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
 
 /**
  * Middleware to verify JWT token and authenticate user

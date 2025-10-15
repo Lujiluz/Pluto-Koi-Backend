@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
-import { AuctionActivityModel, IAuctionActivity } from "#models/auction.activity.model.js";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { GeneralResponse } from "#interfaces/global.interface.js";
-import { AuctionModel } from "#models/auction.model.js";
+import { AuctionActivityModel, IAuctionActivity } from "../models/auction.activity.model.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { GeneralResponse } from "../interfaces/global.interface.js";
+import { AuctionModel } from "../models/auction.model.js";
 
 export interface BidData {
   auctionId: string;

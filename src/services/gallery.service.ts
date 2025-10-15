@@ -1,8 +1,8 @@
-import { GeneralResponse } from "#interfaces/global.interface.js";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { IGallery } from "#models/gallery.model.js";
-import { galleryRepository, CreateGalleryData, UpdateGalleryData } from "#repository/gallery.repository.js";
-import { processUploadedFiles, validateFiles, deleteFile } from "#utils/fileUpload.js";
+import { GeneralResponse } from "../interfaces/global.interface.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { IGallery } from "../models/gallery.model.js";
+import { galleryRepository, CreateGalleryData, UpdateGalleryData } from "../repository/gallery.repository.js";
+import { processUploadedFiles, validateFiles, deleteFile } from "../utils/fileUpload.js";
 
 export interface CreateGalleryServiceData {
   galleryName: string;

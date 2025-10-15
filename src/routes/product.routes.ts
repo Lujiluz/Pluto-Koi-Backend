@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { productController } from "#controllers/product.controller.js";
-import { authenticateToken, requireAdmin } from "#middleware/auth.middleware.js";
-import { uploadProductMedia, handleMulterError } from "#middleware/uploadMiddleware.js";
-import { validateCreateProduct, validateUpdateProduct, validateProductId, validatePriceRange, validateProductQuery, validateFeaturedProductsQuery } from "#validations/product.validation.js";
+import { productController } from "../controllers/product.controller.js";
+import { authenticateToken, requireAdmin } from "../middleware/auth.middleware.js";
+import { uploadProductMedia, handleMulterError } from "../middleware/uploadMiddleware.js";
+import { validateCreateProduct, validateUpdateProduct, validateProductId, validatePriceRange, validateProductQuery, validateFeaturedProductsQuery } from "../validations/product.validation.js";
 
 const router = Router();
 

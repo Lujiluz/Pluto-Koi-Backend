@@ -1,6 +1,6 @@
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { ProductModel, IProduct } from "#models/product.model.js";
-import { paginationMetadata } from "#utils/pagination.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { ProductModel, IProduct } from "../models/product.model.js";
+import { paginationMetadata } from "../utils/pagination.js";
 
 export interface CreateProductData {
   productName: string;
@@ -104,7 +104,7 @@ export class ProductRepository {
 
       return { products, metadata };
     } catch (error) {
-      console.log('[PRODUCT_REPOSITORY]', error);
+      console.log("[PRODUCT_REPOSITORY]", error);
       throw new CustomErrorHandler(500, "Failed to fetch products");
     }
   }

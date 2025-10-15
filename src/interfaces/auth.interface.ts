@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { IUser, UserRole } from "#models/user.model.js";
+import { IUser, UserRole } from "../models/user.model.js";
 
 export interface AuthResponse {
   status: string;

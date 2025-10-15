@@ -1,6 +1,6 @@
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { UserModel, IUser, UserRole } from "#models/user.model.js";
-import { paginationMetadata } from "#utils/pagination.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { UserModel, IUser, UserRole } from "../models/user.model.js";
+import { paginationMetadata } from "../utils/pagination.js";
 
 export interface CreateUserData {
   name: string;

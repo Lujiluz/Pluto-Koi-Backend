@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { logger, LogContext, RequestLog, ResponseLog } from "#utils/logger.js";
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
+import { logger, LogContext, RequestLog, ResponseLog } from "../utils/logger.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
 
 // Extend Request interface to include logging context
 declare global {

@@ -1,7 +1,7 @@
-import { GeneralResponse } from "#interfaces/global.interface.js";
-import { CustomErrorHandler } from "#middleware/errorHandler.js";
-import { IUser } from "#models/user.model.js";
-import { CreateUserData, userRepository } from "#repository/user.repository.js";
+import { GeneralResponse } from "../interfaces/global.interface.js";
+import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { IUser } from "../models/user.model.js";
+import { CreateUserData, userRepository } from "../repository/user.repository.js";
 
 class UserService {
   async getUserById(userId: string): Promise<GeneralResponse<IUser | null>> {

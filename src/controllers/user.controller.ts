@@ -1,5 +1,5 @@
-import { AuthenticatedRequest } from "#interfaces/auth.interface.js";
-import { userService } from "#services/user.service.js";
+import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { userService } from "../services/user.service.js";
 import { NextFunction, Response } from "express";
 
 class UserController {
@@ -14,18 +14,18 @@ class UserController {
       next(error);
     }
   }
-    
-    async deleteUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-        try {
-            const { id } = req.params;
-            
-            const result = await userService.deleteUserById(id);
-            res.status(200).json(result);
-        } catch (error) {
-            console.error("Error deleting user:", error);
-            next(error);
-        }
+
+  async deleteUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const result = await userService.deleteUserById(id);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      next(error);
     }
+  }
 }
 
 export const userController = new UserController();
