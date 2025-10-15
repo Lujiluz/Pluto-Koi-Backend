@@ -105,7 +105,22 @@ export class GalleryRepository {
         query.owner = { $regex: filters.owner, $options: "i" };
       }
 
-      const [galleries, total] = await Promise.all([GalleryModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit), GalleryModel.countDocuments(query)]);
+      const [updatedGalleries, total] = await Promise.all([
+        GalleryModel.findOneAndUpdate(query, {
+          $map: {
+            input: "$media",
+            as: "item",
+            in: {
+              fileUrl: { $replaceOne: { input: "$$item.fileUrl", find: "http://localhost:1728", replacement: process.env.BASE_URL } },
+            },
+          },
+        }),
+        GalleryModel.countDocuments(query),
+      ]);
+
+      console.log("updatedGalleries", updatedGalleries);
+
+      const galleries = await GalleryModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
       const metadata = paginationMetadata(page, limit, total);
 
