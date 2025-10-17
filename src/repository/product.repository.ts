@@ -98,20 +98,20 @@ export class ProductRepository {
         query["$text"] = { $search: filters.search };
       }
 
-      const [updatedProducts, total] = await Promise.all([
-        ProductModel.findOneAndUpdate(query, {
-          $map: {
-            input: "$media",
-            as: "item",
-            in: {
-              fileUrl: { $replaceOne: { input: "$$item.fileUrl", find: "http://localhost:1728", replacement: process.env.BASE_URL } },
-            },
-          },
-        }),
+      const [total] = await Promise.all([
+        // ProductModel.findOneAndUpdate(query, {
+        //   $map: {
+        //     input: "$media",
+        //     as: "item",
+        //     in: {
+        //       fileUrl: { $replaceOne: { input: "$$item.fileUrl", find: "http://localhost:1728", replacement: process.env.BASE_URL } },
+        //     },
+        //   },
+        // }),
         ProductModel.countDocuments(query),
       ]);
 
-      console.log("updatedProducts: ", updatedProducts);
+      // console.log("updatedProducts: ", updatedProducts);
 
       const products = await ProductModel.find(query).skip(skip).limit(limit).exec();
 
