@@ -10,6 +10,8 @@ export interface IAuction extends Document {
   endPrice: number;
   startDate: Date;
   endDate: Date;
+  endTime: Date;
+  extraTime: number
   highestBid: number;
   media: IAuctionMedia[];
   createdAt: Date;
@@ -23,6 +25,8 @@ const auctionSchema = new Schema<IAuction>(
     endPrice: { type: Number, required: true, default: 0 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+    endTime: { type: Date, required: true },
+    extraTime: { type: Number, required: true, default: 0 },
     highestBid: { type: Number, required: true, default: 0 },
     media: [
       {

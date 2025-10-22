@@ -35,17 +35,20 @@ export const createAuctionSchema = z
         const date = typeof val === "string" ? new Date(val) : val;
         console.log("val: ", new Date(val));
 
-        console.log('date: ', date)
+        console.log("date: ", date);
         if (isNaN(date.getTime())) throw new Error("Invalid start date");
         return date;
       })
       .refine((val) => val > new Date(), "Start date must be in the future"),
- 
+
     endDate: z.union([z.string(), z.date()]).transform((val) => {
       const date = typeof val === "string" ? new Date(val) : val;
       if (isNaN(date.getTime())) throw new Error("Invalid end date");
       return date;
     }),
+
+    endTime: z.string().optional().nullable(),
+    extraTime: z.number().optional().default(5),
 
     highestBid: z
       .union([z.string(), z.number()])

@@ -99,15 +99,6 @@ export class ProductRepository {
       }
 
       const [total] = await Promise.all([
-        // ProductModel.findOneAndUpdate(query, {
-        //   $map: {
-        //     input: "$media",
-        //     as: "item",
-        //     in: {
-        //       fileUrl: { $replaceOne: { input: "$$item.fileUrl", find: "http://localhost:1728", replacement: process.env.BASE_URL } },
-        //     },
-        //   },
-        // }),
         ProductModel.countDocuments(query),
       ]);
 

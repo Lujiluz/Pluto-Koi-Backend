@@ -7,3 +7,5 @@ coverage
 .vscode
 .idea
 *.log
+__tests__
+*test.ts

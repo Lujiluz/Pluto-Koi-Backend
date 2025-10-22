@@ -106,19 +106,8 @@ export class GalleryRepository {
       }
 
       const [total] = await Promise.all([
-        // GalleryModel.findOneAndUpdate(query, {
-        //   $map: {
-        //     input: "$media",
-        //     as: "item",
-        //     in: {
-        //       fileUrl: { $replaceOne: { input: "$$item.fileUrl", find: "http://localhost:1728", replacement: process.env.BASE_URL } },
-        //     },
-        //   },
-        // }),
         GalleryModel.countDocuments(query),
       ]);
-
-      // console.log("updatedGalleries", updatedGalleries);
 
       const galleries = await GalleryModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 

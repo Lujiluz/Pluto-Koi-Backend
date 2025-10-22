@@ -40,15 +40,6 @@ class AuctionRepository {
       if (search) {
         query = { $text: { $search: search } };
       }
-      // const updatedAuctions = await AuctionModel.findOneAndUpdate(query, {
-      //   $map: {
-      //     input: "$media",
-      //     as: "item",
-      //     in: {
-      //       fileUrl: { $replaceOne: { input: "$$item.fileUrl", find: "http://localhost:1728", replacement: process.env.BASE_URL } },
-      //     },
-      //   },
-      // });
 
       // console.log("updatedAuctions", updatedAuctions);
       const auctions = await AuctionModel.find(query).skip(skip).limit(limit).exec();
