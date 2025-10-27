@@ -6,6 +6,7 @@ import productRoutes from "./product.routes.js";
 import galleryRoutes from "./gallery.routes.js";
 import userRoutes from "./user.routes.js";
 import wishlistRoutes from "./wishlist.routes.js";
+import generalRulesRoutes from "./general-rules.routes.js";
 
 const router = Router();
 
@@ -17,21 +18,13 @@ router.use("/auction-activity", auctionActivityRoutes);
 router.use("/product", productRoutes);
 router.use("/gallery", galleryRoutes);
 router.use("/wishlist", wishlistRoutes);
+router.use("/general-rules", generalRulesRoutes);
 
 // Health check for API routes
 router.get("/health", (req, res) => {
   res.json({
     success: true,
     message: "API routes are working",
-    endpoints: {
-      auth: "/api/pluto-koi/v1/auth",
-      auction: "/api/pluto-koi/v1/auction",
-      auctionActivity: "/api/pluto-koi/v1/auction-activity",
-      product: "/api/pluto-koi/v1/product",
-      gallery: "/api/pluto-koi/v1/gallery",
-      user: "/api/pluto-koi/v1/user",
-      wishlist: "/api/pluto-koi/v1/wishlist",
-    },
     timestamp: new Date().toISOString(),
   });
 });
