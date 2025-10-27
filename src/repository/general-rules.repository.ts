@@ -17,7 +17,7 @@ class GeneralRulesRepository {
   /**
    * Get general rules
    */
-  async getRules(): Promise<IGeneralRules> {
+  async getRules(): Promise<any> {
     try {
       const rules = await GeneralRulesModel.findOne();
 
