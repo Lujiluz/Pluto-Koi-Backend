@@ -23,7 +23,7 @@ class AuctionController {
   async createAuction(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       // Extract form data
-      const { itemName, startPrice, endPrice, startDate, endDate, highestBid } = req.body;
+      const { itemName, startPrice, endPrice, startDate, endDate, highestBid, endTime, extraTime = 5 } = req.body;
 
       // Validate required fields
       if (!itemName || !startPrice || !startDate || !endDate) {
@@ -69,6 +69,8 @@ class AuctionController {
         endPrice: endPrice ? parseFloat(endPrice) : undefined,
         startDate,
         endDate,
+        endTime,
+        extraTime,
         highestBid: highestBid ? parseFloat(highestBid) : undefined,
         media: mediaFiles.length > 0 ? mediaFiles : undefined,
       };

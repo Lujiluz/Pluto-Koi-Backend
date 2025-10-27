@@ -12,6 +12,8 @@ export interface CreateAuctionData {
   endPrice?: number;
   startDate: string | Date;
   endDate: string | Date;
+  endTime: string | Date
+  extraTime?: number
   highestBid?: number;
   media?: UploadedFile[];
 }
@@ -74,8 +76,8 @@ class AuctionService {
       const { media, ...auctionFields } = auctionData;
 
       // Validate required fields
-      if (!auctionFields.itemName || !auctionFields.startPrice || !auctionFields.startDate || !auctionFields.endDate) {
-        throw new CustomErrorHandler(400, "Missing required fields: itemName, startPrice, startDate, endDate");
+      if (!auctionFields.itemName || !auctionFields.startPrice || !auctionFields.startDate || !auctionFields.endDate || !auctionFields.endTime) {
+        throw new CustomErrorHandler(400, "Missing required fields: itemName, startPrice, startDate, endDate, endTime");
       }
 
       // Validate dates
@@ -119,6 +121,8 @@ class AuctionService {
         endPrice: auctionFields.endPrice ? Number(auctionFields.endPrice) : 0,
         startDate,
         endDate,
+        endTime: new Date(auctionFields.endTime),
+        extraTime: auctionFields.extraTime ? Number(auctionFields.extraTime) : 5,
         highestBid: auctionFields.highestBid ? Number(auctionFields.highestBid) : 0,
         media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
       };
