@@ -3,6 +3,9 @@ import { AuctionActivityModel, IAuctionActivity } from "../models/auction.activi
 import { CustomErrorHandler } from "../middleware/errorHandler.js";
 import { GeneralResponse } from "../interfaces/global.interface.js";
 import { AuctionModel } from "../models/auction.model.js";
+import { websocketService } from "./websocket.service.js";
+import { LeaderboardUpdatePayload, TimeExtensionPayload, NewBidPayload, LeaderboardParticipant } from "../interfaces/websocket.interface.js";
+import { logger } from "../utils/logger.js";
 
 export interface BidData {
   auctionId: string;
@@ -35,16 +38,137 @@ export interface AuctionParticipation {
 
 export class AuctionActivityService {
   /**
+   * Check if bid is within extra time window and handle auto-extension
+   */
+  private async handleAutoExtension(auction: any, bidTime: Date): Promise<{ extended: boolean; newEndTime?: Date; extensionMinutes?: number }> {
+    try {
+      const extraTimeMinutes = auction.extraTime || 0;
+
+      // If no extra time configured, no extension needed
+      if (extraTimeMinutes === 0) {
+        return { extended: false };
+      }
+
+      const currentEndTime = new Date(auction.endTime);
+      const extraTimeMs = extraTimeMinutes * 60 * 1000; // Convert minutes to milliseconds
+      const extensionThreshold = new Date(currentEndTime.getTime() - extraTimeMs);
+
+      // Check if the bid is placed within the extra time window
+      if (bidTime >= extensionThreshold && bidTime <= currentEndTime) {
+        // Extend the end time by extra time minutes
+        const newEndTime = new Date(bidTime.getTime() + extraTimeMs);
+
+        // Update auction end time in database
+        await AuctionModel.findByIdAndUpdate(auction._id, {
+          endTime: newEndTime,
+        });
+
+        logger.info("Auction time extended", {
+          auctionId: auction._id.toString(),
+          oldEndTime: currentEndTime,
+          newEndTime,
+          extensionMinutes: extraTimeMinutes,
+          bidTime,
+        });
+
+        return {
+          extended: true,
+          newEndTime,
+          extensionMinutes: extraTimeMinutes,
+        };
+      }
+
+      return { extended: false };
+    } catch (error) {
+      logger.error("Error handling auto-extension", {
+        error: error instanceof Error ? error.message : error,
+        auctionId: auction._id,
+      });
+      // Don't throw error, just return no extension
+      return { extended: false };
+    }
+  }
+
+  /**
+   * Build leaderboard update payload
+   */
+  private async buildLeaderboardPayload(auctionId: string): Promise<LeaderboardUpdatePayload> {
+    const auctionObjectId = new Types.ObjectId(auctionId);
+
+    // Get all bids for the auction
+    const allBids = await AuctionActivityModel.getAuctionParticipants(auctionObjectId);
+
+    // Get current highest bid
+    const currentHighestBid = await AuctionActivityModel.getHighestBidForAuction(auctionObjectId);
+
+    // Group bids by user and calculate statistics
+    const userBidMap = new Map();
+
+    allBids.forEach((bid) => {
+      const userId = bid.userId._id.toString();
+      if (!userBidMap.has(userId)) {
+        userBidMap.set(userId, {
+          userId,
+          name: (bid.userId as any).name,
+          email: (bid.userId as any).email,
+          totalBids: 0,
+          highestBid: 0,
+          latestBidTime: bid.bidTime,
+          isHighestBidder: false,
+        });
+      }
+
+      const userStats = userBidMap.get(userId);
+      userStats.totalBids++;
+      userStats.highestBid = Math.max(userStats.highestBid, bid.bidAmount);
+      userStats.latestBidTime = bid.bidTime > userStats.latestBidTime ? bid.bidTime : userStats.latestBidTime;
+    });
+
+    // Mark the current highest bidder
+    if (currentHighestBid) {
+      const winnerId = currentHighestBid.userId._id.toString();
+      if (userBidMap.has(winnerId)) {
+        userBidMap.get(winnerId).isHighestBidder = true;
+      }
+    }
+
+    // Sort participants by highest bid (descending) and add rank
+    const participants: LeaderboardParticipant[] = Array.from(userBidMap.values())
+      .sort((a, b) => b.highestBid - a.highestBid)
+      .map((user, index) => ({
+        ...user,
+        rank: index + 1,
+      }));
+
+    return {
+      auctionId,
+      participants,
+      totalParticipants: participants.length,
+      totalBids: allBids.length,
+      currentHighestBid: currentHighestBid?.bidAmount || 0,
+      currentWinner: currentHighestBid
+        ? {
+            userId: currentHighestBid.userId._id.toString(),
+            name: (currentHighestBid.userId as any).name,
+            bidAmount: currentHighestBid.bidAmount,
+          }
+        : null,
+      timestamp: new Date(),
+    };
+  }
+
+  /**
    * Place a new bid for an auction
    */
   async placeBid(bidData: BidData): Promise<GeneralResponse<IAuctionActivity>> {
     try {
       const { auctionId, userId, bidAmount, bidType = "initial" } = bidData;
+      const bidTime = new Date();
 
       // Validate auction exists and is active
       const auction = await AuctionModel.findById(auctionId);
       if (!auction) throw new CustomErrorHandler(404, "Auction not found");
-      if (auction.endDate < new Date()) throw new CustomErrorHandler(400, "Auction has ended");
+      if (auction.endTime < bidTime) throw new CustomErrorHandler(400, "Auction has ended");
 
       // Get current highest bid
       const currentHighestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auctionId));
@@ -66,11 +190,45 @@ export class AuctionActivityService {
         bidAmount,
         bidType: currentHighestBid ? "winning" : bidType,
         isActive: true,
-        bidTime: new Date(),
+        bidTime,
       });
 
       const savedBid = await newBid.save();
       await savedBid.populate("userId", "name email role");
+
+      // Handle auto-extension logic
+      const extensionResult = await this.handleAutoExtension(auction, bidTime);
+
+      // Emit WebSocket events
+      if (websocketService.isInitialized()) {
+        // 1. Emit new bid notification
+        const newBidPayload: NewBidPayload = {
+          auctionId,
+          userId,
+          userName: (savedBid.userId as any).name,
+          bidAmount,
+          bidType: savedBid.bidType,
+          bidTime,
+          isNewLeader: true,
+        };
+        websocketService.emitNewBid(auctionId, newBidPayload);
+
+        // 2. Emit leaderboard update
+        const leaderboardPayload = await this.buildLeaderboardPayload(auctionId);
+        websocketService.emitLeaderboardUpdate(auctionId, leaderboardPayload);
+
+        // 3. Emit time extension if applicable
+        if (extensionResult.extended && extensionResult.newEndTime && extensionResult.extensionMinutes) {
+          const timeExtensionPayload: TimeExtensionPayload = {
+            auctionId,
+            newEndTime: extensionResult.newEndTime,
+            extensionMinutes: extensionResult.extensionMinutes,
+            reason: `Bid placed within last ${extensionResult.extensionMinutes} minutes`,
+            timestamp: new Date(),
+          };
+          websocketService.emitTimeExtension(auctionId, timeExtensionPayload);
+        }
+      }
 
       return {
         status: "success",

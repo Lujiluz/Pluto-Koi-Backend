@@ -1,12 +1,15 @@
 import express from "express";
+import { createServer } from "http";
 import { DatabaseConfig } from "./config/database.js";
 import apiRoutes from "./routes/index.js";
 import { skipLogging, errorLoggingMiddleware, performanceLoggingMiddleware, developmentLoggingMiddleware } from "./middleware/logging.middleware.js";
 import { logger } from "./utils/logger.js";
+import { websocketService } from "./services/websocket.service.js";
 import { config } from "dotenv";
 config();
 
 const app = express();
+const httpServer = createServer(app);
 const port = process.env.PORT ?? "3000";
 
 // Trust proxy for accurate IP addresses (if behind reverse proxy)
@@ -86,9 +89,14 @@ async function startServer() {
     const dbConfig = DatabaseConfig.getInstance();
     await dbConfig.connect();
 
+    // Initialize WebSocket service
+    websocketService.initialize(httpServer);
+    logger.info("🔌 WebSocket service ready");
+
     // Start the server
-    app.listen(port, () => {
+    httpServer.listen(port, () => {
       logger.info(`🌟 Server running on port ${port}`);
+      logger.info(`🔌 WebSocket server ready for connections`);
       // logger.info(`📊 Health check available at http://localhost:${port}${process.env.API_PREFIX}/health`);
       // logger.info(`🔐 Auth endpoints: http://localhost:${port}${process.env.API_PREFIX}/auth`);
     });
