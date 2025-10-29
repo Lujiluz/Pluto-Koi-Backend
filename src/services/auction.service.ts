@@ -12,8 +12,8 @@ export interface CreateAuctionData {
   endPrice?: number;
   startDate: string | Date;
   endDate: string | Date;
-  endTime: string | Date
-  extraTime?: number
+  endTime: string | Date;
+  extraTime?: number;
   highestBid?: number;
   media?: UploadedFile[];
 }
@@ -84,6 +84,19 @@ class AuctionService {
       const startDate = new Date(auctionFields.startDate);
       const endDate = new Date(auctionFields.endDate);
 
+      console.log("startDate: ", startDate);
+      console.log("endDate before setTime: ", endDate);
+
+      const endTimeString = typeof auctionFields.endTime === "string" ? auctionFields.endTime : auctionFields.endTime.toTimeString().split(" ")[0];
+      const endTime = new Date(auctionFields.endDate);
+      endTime.setHours(Number(endTimeString.split(":")[0]), Number(endTimeString.split(":")[1]));
+
+      // set time with given endTime like so: HH:mm
+      // const endTime = new Date(auctionFields.endTime);
+      // endDate.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+      // console.log('endTime: ', endTime);
+      // console.log("endTime test: ", new Date(endDate).setTime());
+
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         throw new CustomErrorHandler(400, "Invalid date format");
       }
@@ -114,6 +127,8 @@ class AuctionService {
         }
       }
 
+      console.log("endTime to locale string: ", endTime.toLocaleTimeString("id-ID", { hour12: false }));
+
       // Prepare auction data for database
       const auctionToCreate = {
         itemName: auctionFields.itemName,
@@ -121,11 +136,13 @@ class AuctionService {
         endPrice: auctionFields.endPrice ? Number(auctionFields.endPrice) : 0,
         startDate,
         endDate,
-        endTime: new Date(auctionFields.endTime),
+        endTime,
         extraTime: auctionFields.extraTime ? Number(auctionFields.extraTime) : 5,
         highestBid: auctionFields.highestBid ? Number(auctionFields.highestBid) : 0,
         media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
       };
+
+      console.log("auctionToCreate:", auctionToCreate);
 
       // Create auction in database
       const createdAuction = await auctionRepository.create(auctionToCreate as IAuction);

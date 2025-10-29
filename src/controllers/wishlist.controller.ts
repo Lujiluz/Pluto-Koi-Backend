@@ -17,7 +17,17 @@ export class WishlistController {
         return;
       }
 
-      const response = await wishlistService.getWishlist(req.user.id);
+      const { itemType } = req.query;
+
+      console.log("Item Type:", itemType);
+
+      let response;
+      if (itemType) {
+        response = await wishlistService.getItemsByType(req.user.id, itemType as WishlistItemType);
+      } else {
+        response = await wishlistService.getWishlist(req.user.id);
+      }
+
       res.status(200).json(response);
     } catch (error) {
       console.error("Error getting wishlist:", error);

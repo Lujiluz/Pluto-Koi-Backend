@@ -9,3 +9,4 @@ coverage
 *.log
 __tests__
 *test.ts
+/public

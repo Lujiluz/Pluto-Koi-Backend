@@ -48,7 +48,16 @@ export const createAuctionSchema = z
     }),
 
     endTime: z.string().optional().nullable(),
-    extraTime: z.number().optional().default(5),
+    extraTime: z
+      .union([z.string(), z.number()])
+      .transform((val) => {
+        if (val === "" || val === undefined || val === null) return 0;
+        const num = typeof val === "string" ? parseInt(val) : val;
+        if (isNaN(num)) throw new Error("Invalid extra time type");
+        return num;
+      })
+      .optional()
+      .default(5),
 
     highestBid: z
       .union([z.string(), z.number()])
