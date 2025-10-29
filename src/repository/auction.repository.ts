@@ -42,7 +42,7 @@ class AuctionRepository {
       }
 
       // console.log("updatedAuctions", updatedAuctions);
-      const auctions = await AuctionModel.find(query).skip(skip).limit(limit).exec();
+      const auctions = await AuctionModel.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }).exec();
       const total = await AuctionModel.countDocuments(query).exec();
       const metadata = paginationMetadata(page, limit, total);
       return { auctions, metadata };
