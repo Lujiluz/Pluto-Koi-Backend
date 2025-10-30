@@ -13,6 +13,7 @@ This feature allows users to purchase products with two different flows:
 
 #### User Model Updates
 
+- Added `phoneNumber` field to store user's phone number (required)
 - Added `address` field to store user's complete address information:
   - `street`: String
   - `city`: String
@@ -35,6 +36,7 @@ Located: `src/models/transaction.model.ts`
 - `buyerInfo`: Complete buyer information
   - `name`: Buyer's name
   - `email`: Buyer's email
+  - `phoneNumber`: Buyer's phone number
   - `address`: Complete address object
 - `paymentProof`: URL to uploaded payment proof image
 - `paymentStatus`: PENDING | VERIFIED | REJECTED
@@ -58,6 +60,7 @@ Located: `src/models/transaction.model.ts`
    Body:
    - name: string (required)
    - email: string (required, valid email)
+   - phoneNumber: string (required)
    - address: object (required)
      - street: string
      - city: string
@@ -260,6 +263,7 @@ Located: `src/models/transaction.model.ts`
 1. User fills out form with:
    - Name
    - Email
+   - Phone number
    - Complete address (street, city, state, zipCode, country)
    - Selects product and quantity
    - Uploads payment proof image
@@ -270,10 +274,10 @@ Located: `src/models/transaction.model.ts`
 
 ### Logged-in User Purchase Flow
 
-1. User must have complete address in profile (if not, update profile first)
+1. User must have complete address and phone number in profile (if not, update profile first)
 2. User selects product and quantity
 3. User uploads payment proof image
-4. System retrieves user's name, email, and address from profile
+4. System retrieves user's name, email, phone number, and address from profile
 5. System validates product availability
 6. System calculates total amount
 7. Transaction is created with status "pending"
@@ -345,6 +349,7 @@ Common error responses:
 const formData = new FormData();
 formData.append("name", "John Doe");
 formData.append("email", "john@example.com");
+formData.append("phoneNumber", "+1234567890");
 formData.append("address[street]", "123 Main St");
 formData.append("address[city]", "New York");
 formData.append("address[state]", "NY");

@@ -21,6 +21,12 @@ export const registerSchema = z.object({
     .max(128, "Password cannot exceed 128 characters")
     .refine((val) => val.length > 0, "Password is required"),
 
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required")
+    .regex(/^[\d\s\-\+\(\)]+$/, "Please enter a valid phone number"),
+
   role: z.nativeEnum(UserRole).default(UserRole.END_USER),
 
   address: z
@@ -60,6 +66,12 @@ export const updateProfileSchema = z
 
     email: z.string().email("Please enter a valid email address").toLowerCase().trim().optional(),
 
+    phoneNumber: z
+      .string()
+      .trim()
+      .regex(/^[\d\s\-\+\(\)]+$/, "Please enter a valid phone number")
+      .optional(),
+
     address: z
       .object({
         street: z.string().trim().min(1, "Street is required"),
@@ -70,8 +82,8 @@ export const updateProfileSchema = z
       })
       .optional(),
   })
-  .refine((data) => data.name || data.email || data.address, {
-    message: "At least one field (name, email, or address) must be provided",
+  .refine((data) => data.name || data.email || data.phoneNumber || data.address, {
+    message: "At least one field (name, email, phoneNumber, or address) must be provided",
   });
 
 // Type inference from schemas

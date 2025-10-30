@@ -19,6 +19,7 @@ export enum PaymentStatus {
 export interface IBuyerInfo {
   name: string;
   email: string;
+  phoneNumber: string;
   address: {
     street: string;
     city: string;
@@ -101,6 +102,11 @@ const transactionSchema = new Schema<ITransaction>(
         type: String,
         required: [true, "Buyer email is required"],
         lowercase: true,
+        trim: true,
+      },
+      phoneNumber: {
+        type: String,
+        required: [true, "Buyer phone number is required"],
         trim: true,
       },
       address: {

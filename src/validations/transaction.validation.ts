@@ -23,6 +23,11 @@ export const guestPurchaseSchema = z.object({
   // Guest buyer information
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(50, "Name cannot exceed 50 characters"),
   email: z.string().email("Please enter a valid email address").toLowerCase().trim(),
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required")
+    .regex(/^[\d\s\-\+\(\)]+$/, "Please enter a valid phone number"),
   address: addressSchema,
 });
 

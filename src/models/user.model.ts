@@ -18,6 +18,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  phoneNumber: string;
   role: UserRole;
   address?: IAddress;
   deleted: boolean;
@@ -48,6 +49,12 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
+    },
+    phoneNumber: {
+      type: String,
+      required: [true, "Phone number is required"],
+      trim: true,
+      match: [/^[\d\s\-\+\(\)]+$/, "Please enter a valid phone number"],
     },
     role: {
       type: String,

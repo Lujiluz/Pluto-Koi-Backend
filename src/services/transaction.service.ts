@@ -35,6 +35,7 @@ export class TransactionService {
       const buyerInfo: IBuyerInfo = {
         name: purchaseData.name,
         email: purchaseData.email,
+        phoneNumber: purchaseData.phoneNumber,
         address: purchaseData.address,
       };
 
@@ -107,6 +108,7 @@ export class TransactionService {
       const buyerInfo: IBuyerInfo = {
         name: user.name,
         email: user.email,
+        phoneNumber: user.phoneNumber,
         address: user.address,
       };
 
