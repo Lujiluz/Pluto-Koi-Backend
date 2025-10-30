@@ -22,6 +22,16 @@ export const registerSchema = z.object({
     .refine((val) => val.length > 0, "Password is required"),
 
   role: z.nativeEnum(UserRole).default(UserRole.END_USER),
+
+  address: z
+    .object({
+      street: z.string().trim().min(1, "Street is required"),
+      city: z.string().trim().min(1, "City is required"),
+      state: z.string().trim().min(1, "State is required"),
+      zipCode: z.string().trim().min(1, "Zip code is required"),
+      country: z.string().trim().min(1, "Country is required"),
+    })
+    .optional(),
 });
 
 /**
@@ -49,9 +59,19 @@ export const updateProfileSchema = z
     name: z.string().min(2, "Name must be at least 2 characters long").max(50, "Name cannot exceed 50 characters").trim().optional(),
 
     email: z.string().email("Please enter a valid email address").toLowerCase().trim().optional(),
+
+    address: z
+      .object({
+        street: z.string().trim().min(1, "Street is required"),
+        city: z.string().trim().min(1, "City is required"),
+        state: z.string().trim().min(1, "State is required"),
+        zipCode: z.string().trim().min(1, "Zip code is required"),
+        country: z.string().trim().min(1, "Country is required"),
+      })
+      .optional(),
   })
-  .refine((data) => data.name || data.email, {
-    message: "At least one field (name or email) must be provided",
+  .refine((data) => data.name || data.email || data.address, {
+    message: "At least one field (name, email, or address) must be provided",
   });
 
 // Type inference from schemas

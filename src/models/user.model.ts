@@ -6,11 +6,20 @@ export enum UserRole {
   END_USER = "endUser",
 }
 
+export interface IAddress {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
   role: UserRole;
+  address?: IAddress;
   deleted: boolean;
   deletedAt: Date | null;
   createdAt: Date;
@@ -45,6 +54,28 @@ const userSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       default: UserRole.END_USER,
     },
+    address: {
+      street: {
+        type: String,
+        trim: true,
+      },
+      city: {
+        type: String,
+        trim: true,
+      },
+      state: {
+        type: String,
+        trim: true,
+      },
+      zipCode: {
+        type: String,
+        trim: true,
+      },
+      country: {
+        type: String,
+        trim: true,
+      },
+    },
     deleted: {
       type: Boolean,
       default: false,
@@ -52,7 +83,7 @@ const userSchema = new Schema<IUser>(
     deletedAt: {
       type: Date,
       default: null,
-    }
+    },
   },
   {
     timestamps: true,

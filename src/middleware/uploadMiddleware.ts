@@ -6,7 +6,7 @@ import { NextFunction, Request, Response } from "express";
 
 // Ensure upload directories exist
 const createUploadDirectories = () => {
-  const dirs = ["public/media", "public/media/auctions", "public/media/products", "public/media/gallery"];
+  const dirs = ["public/media", "public/media/auctions", "public/media/products", "public/media/gallery", "public/media/transactions"];
 
   dirs.forEach((dir) => {
     if (!fs.existsSync(dir)) {
@@ -27,6 +27,8 @@ const storage = multer.diskStorage({
       uploadPath = "public/media/products";
     } else if (req.originalUrl.includes("/gallery")) {
       uploadPath = "public/media/gallery";
+    } else if (req.originalUrl.includes("/transaction")) {
+      uploadPath = "public/media/transactions";
     }
 
     cb(null, uploadPath);
@@ -64,6 +66,7 @@ export const uploadSingleFile = upload.single("file");
 export const uploadMultipleFiles = upload.array("files", 10);
 export const uploadProductMedia = upload.array("media", 10);
 export const uploadGalleryMedia = upload.array("media", 20); // Allow up to 20 files for galleries
+export const uploadPaymentProof = upload.single("paymentProof"); // Single payment proof image for transactions
 
 export const handleMulterError = (error: any, req: any, res: any, next: any) => {
   next(error);
