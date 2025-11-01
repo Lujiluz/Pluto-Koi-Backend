@@ -5,6 +5,7 @@ import { IAuction } from "../models/auction.model.js";
 import { auctionRepository } from "../repository/auction.repository.js";
 import { processUploadedFiles, UploadedFile, validateFiles } from "../utils/fileUpload.js";
 import { Types } from "mongoose";
+import { eventService } from "./event.service.js";
 
 export interface CreateAuctionData {
   itemName: string;
@@ -25,11 +26,14 @@ class AuctionService {
    * @param limit - Number of auctions per page
    * @returns A response object containing auctions, metadata, and statistics
    */
-  async getAllAuctions(page: number = 1, limit: number = 10, search: string = ""): Promise<GeneralResponse<{ auctions: IAuction[]; metadata: any; statistics: any }>> {
+  async getAllAuctions(page: number = 1, limit: number = 10, search: string = ""): Promise<GeneralResponse<{ auctions: IAuction[]; metadata: any; statistics: any; eventDetail?: { totalBidAmount: number } }>> {
     try {
       const { auctions, metadata } = await auctionRepository.findAll(page, limit, search);
 
       const auctionStats = await auctionRepository.getStats();
+
+      // Get event details if event is active
+      const eventDetail = await eventService.getEventDetailsForAuction();
 
       if (auctions.length > 0) {
         const auctionsWithHighestBids = await Promise.all(
@@ -48,17 +52,39 @@ class AuctionService {
           })
         );
 
+        const responseData: any = {
+          statistics: auctionStats,
+          auctions: auctionsWithHighestBids,
+          metadata,
+        };
+
+        // Add eventDetail only if event is active
+        if (eventDetail) {
+          responseData.eventDetail = eventDetail;
+        }
+
         return {
           status: "success",
           message: "Auctions retrieved successfully",
-          data: { statistics: auctionStats, auctions: auctionsWithHighestBids, metadata },
+          data: responseData,
         };
+      }
+
+      const responseData: any = {
+        statistics: auctionStats,
+        auctions,
+        metadata,
+      };
+
+      // Add eventDetail only if event is active
+      if (eventDetail) {
+        responseData.eventDetail = eventDetail;
       }
 
       return {
         status: "success",
         message: "Auctions retrieved successfully",
-        data: { statistics: auctionStats, auctions, metadata },
+        data: responseData,
       };
     } catch (error) {
       console.error("Error retrieving auctions:", error);

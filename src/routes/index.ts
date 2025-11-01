@@ -8,6 +8,7 @@ import userRoutes from "./user.routes.js";
 import wishlistRoutes from "./wishlist.routes.js";
 import generalRulesRoutes from "./general-rules.routes.js";
 import transactionRoutes from "./transaction.routes.js";
+import eventRoutes from "./event.routes.js";
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.use("/gallery", galleryRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/general-rules", generalRulesRoutes);
 router.use("/transaction", transactionRoutes);
+router.use("/event", eventRoutes);
 
 // Health check for API routes
 router.get("/health", (req, res) => {
