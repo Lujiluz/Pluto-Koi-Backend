@@ -253,7 +253,6 @@ class AuctionService {
    */
   async updateAuction(auctionId: string, updatedData: Partial<CreateAuctionData>): Promise<GeneralResponse<any>> {
     try {
-      console.log("updatedData:", updatedData);
       const auction = await auctionRepository.findById(auctionId);
 
       if (!auction) {
@@ -265,7 +264,14 @@ class AuctionService {
       if (updatedData.startPrice !== undefined) auction.startPrice = updatedData.startPrice;
       if (updatedData.endPrice !== undefined) auction.endPrice = updatedData.endPrice;
       if (updatedData.startDate !== undefined) auction.startDate = new Date(updatedData.startDate);
-      if (updatedData.endDate !== undefined) auction.endDate = new Date(updatedData.endDate);
+      if (updatedData.endDate !== undefined) {
+        const endTimeString = typeof updatedData.endTime === "string" ? updatedData.endTime : updatedData.endTime?.toTimeString().split(" ")[0];
+        const endTime = new Date(updatedData.endDate);
+        endTime.setHours(Number(endTimeString?.split(":")[0] || 0), Number(endTimeString?.split(":")[1] || 0));
+
+        auction.endTime = endTime;
+      }
+      if (updatedData.endTime !== undefined) auction.endTime = new Date(updatedData.endTime);
       if (updatedData.highestBid !== undefined) auction.highestBid = updatedData.highestBid;
 
       // media update handling

@@ -113,7 +113,7 @@ class AuctionController {
       const { id } = req.params;
       // Extract form data
       console.log("req.body:", req.body);
-      const { itemName, startPrice, endPrice, startDate, endDate, highestBid } = req.body;
+      const { itemName, startPrice, endPrice, startDate, endDate, endTime, highestBid } = req.body;
 
       // Handle uploaded files
       let mediaFiles: UploadedFile[] = [];
@@ -150,6 +150,7 @@ class AuctionController {
         endPrice: endPrice ? parseFloat(endPrice) : undefined,
         startDate,
         endDate,
+        endTime,
         highestBid: highestBid ? parseFloat(highestBid) : undefined,
         media: mediaFiles.length > 0 ? mediaFiles : undefined,
       };

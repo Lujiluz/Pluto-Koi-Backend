@@ -10,7 +10,8 @@ class GeneralRulesRepository {
       const rules = new GeneralRulesModel(rulesData);
       return await rules.save();
     } catch (error) {
-      throw new Error("Failed to create general rules");
+      console.log('error create general rules: ', error)
+      throw new CustomErrorHandler(500,"Failed to create general rules");
     }
   }
 
@@ -27,9 +28,10 @@ class GeneralRulesRepository {
 
       return {
         _id: rules._id,
-        content: JSON.parse(rules.content),
+        content: rules.content,
       };
     } catch (error) {
+      console.log('error get general rules: ', error)
       if (error instanceof CustomErrorHandler) {
         throw error;
       }
