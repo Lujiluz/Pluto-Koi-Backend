@@ -86,18 +86,27 @@ export class UserRepository {
   }
 
   /**
-   * Get all users (with pagination)
+   * Get all users (with pagination, filtering, and search)
    */
-  async findAll(page: number = 1, limit: number = 10): Promise<{ users: IUser[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, status?: string, search?: string): Promise<{ users: IUser[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
-      const [users, total] = await Promise.all([
-        UserModel.find({ role: { $ne: "admin" }, deleted: false }, { name: 1, email: 1, role: 1, createdAt: 1 })
-          .skip(skip)
-          .limit(limit)
-          .sort({ createdAt: -1 }),
-        UserModel.countDocuments({ role: { $ne: "admin" }, deleted: false }),
-      ]);
+
+      // Build filter query
+      const filter: any = { role: { $ne: "admin" }, deleted: false };
+
+      // Add status filter if provided
+      if (status && ["active", "inactive", "banned"].includes(status)) {
+        filter.status = status;
+      }
+
+      // Add search filter if provided
+      if (search) {
+        const searchRegex = new RegExp(search, "i");
+        filter.$or = [{ name: searchRegex }, { email: searchRegex }, { phoneNumber: searchRegex }];
+      }
+
+      const [users, total] = await Promise.all([UserModel.find(filter, { name: 1, email: 1, role: 1, status: 1, phoneNumber: 1, createdAt: 1 }).skip(skip).limit(limit).sort({ createdAt: -1 }), UserModel.countDocuments(filter)]);
 
       const metadata = paginationMetadata(page, limit, total);
 
@@ -136,6 +145,17 @@ export class UserRepository {
       return await UserModel.find({ role });
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to find users by role");
+    }
+  }
+
+  /**
+   * Update user status (for blocking/unblocking)
+   */
+  async updateUserStatus(id: string, status: "active" | "inactive" | "banned"): Promise<IUser | null> {
+    try {
+      return await UserModel.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to update user status");
     }
   }
 }

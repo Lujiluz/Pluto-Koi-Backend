@@ -38,6 +38,24 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
+    // Check if user is banned
+    if (user.status === "banned") {
+      res.status(403).json({
+        success: false,
+        message: "Your account has been blocked. Please contact support.",
+      });
+      return;
+    }
+
+    // Check if user is deleted
+    if (user.deleted) {
+      res.status(403).json({
+        success: false,
+        message: "This account has been deleted",
+      });
+      return;
+    }
+
     // Attach user to request
     req.user = {
       id: user.id,

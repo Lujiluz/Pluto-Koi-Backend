@@ -6,6 +6,7 @@ import { AuctionModel } from "../models/auction.model.js";
 import { websocketService } from "./websocket.service.js";
 import { LeaderboardUpdatePayload, TimeExtensionPayload, NewBidPayload, LeaderboardParticipant } from "../interfaces/websocket.interface.js";
 import { logger } from "../utils/logger.js";
+import { userRepository } from "../repository/user.repository.js";
 
 export interface BidData {
   auctionId: string;
@@ -164,6 +165,17 @@ export class AuctionActivityService {
     try {
       const { auctionId, userId, bidAmount, bidType = "initial" } = bidData;
       const bidTime = new Date();
+
+      // validate user status
+      const userData = await userRepository.findById(userId);
+
+      if (!userData) {
+        throw new CustomErrorHandler(404, "User not found");
+      }
+
+      if (userData.status === "banned") {
+        throw new CustomErrorHandler(403, "Your account has been blocked.");
+      }
 
       // Validate auction exists and is active
       const auction = await AuctionModel.findById(auctionId);

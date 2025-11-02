@@ -86,6 +86,10 @@ export class TransactionService {
         throw new CustomErrorHandler(404, "User not found");
       }
 
+      if (user.status === "banned") {
+        throw new CustomErrorHandler(403, "Your account has been blocked. Please contact support.");
+      }
+
       // Check if user has address information
       if (!user.address || !user.address.street || !user.address.city) {
         throw new CustomErrorHandler(400, "Please update your profile with complete address information before making a purchase");

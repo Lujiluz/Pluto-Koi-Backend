@@ -72,6 +72,16 @@ export class AuthService {
         throw new CustomErrorHandler(401, "Invalid email or password");
       }
 
+      // Check if user is banned
+      if (user.status === "banned") {
+        throw new CustomErrorHandler(403, "Your account has been blocked. Please contact support.");
+      }
+
+      // Check if user is deleted
+      if (user.deleted) {
+        throw new CustomErrorHandler(403, "This account has been deleted");
+      }
+
       // Check password
       const isPasswordValid = await user.comparePassword(loginData.password);
       if (!isPasswordValid) {

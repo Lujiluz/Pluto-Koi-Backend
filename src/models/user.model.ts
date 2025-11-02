@@ -14,6 +14,8 @@ export interface IAddress {
   country: string;
 }
 
+type UserStatus = "active" | "inactive" | "banned";
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -22,6 +24,7 @@ export interface IUser extends Document {
   role: UserRole;
   address?: IAddress;
   deleted: boolean;
+  status: UserStatus;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +39,11 @@ const userSchema = new Schema<IUser>(
       trim: true,
       minlength: [2, "Name must be at least 2 characters long"],
       maxlength: [50, "Name cannot exceed 50 characters"],
+    },
+    status: {
+      type: String,
+      default: "active",
+      enum: ["active", "inactive", "banned"],
     },
     email: {
       type: String,
