@@ -119,18 +119,31 @@ export class UserRepository {
   /**
    * Get user statistics
    */
-  async getUserStats(): Promise<{ totalUsers: number; totalUsersTrend: number; totalDeletedUsers: number; totalDeletedUsersTrend: number }> {
+  async getUserStats(): Promise<{ totalUsers: number; totalUsersTrend: number; totalDeletedUsers: number; totalDeletedUsersTrend: number; totalBlockedUsers: number; totalBlockedUsersTrend: number }> {
     try {
-      const [totalUsers, totalDeletedUsers] = await Promise.all([UserModel.countDocuments({ deleted: false }), UserModel.countDocuments({ deleted: true })]);
+      const [totalUsers, totalDeletedUsers, totalBlockedUsers, totalUsersYesterday, totalDeletedUsersYesterday, totalBlockedUsersYesterday] = await Promise.all([
+        UserModel.countDocuments({ deleted: false }),
+        UserModel.countDocuments({ deleted: true }),
+        await UserModel.countDocuments({ status: "banned", deleted: false }),
+        UserModel.countDocuments({ deleted: false, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ deleted: true, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ status: "banned", deleted: false, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+      ]);
 
-      const totalUsersTrend = totalUsers - (await UserModel.countDocuments({ deleted: false, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));
-      const totalDeletedUsersTrend = totalDeletedUsers - (await UserModel.countDocuments({ deleted: true, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));
+      const totalUsersTrend = this.countTrends(totalUsers, totalUsersYesterday);
+      const totalDeletedUsersTrend = this.countTrends(totalDeletedUsers, totalDeletedUsersYesterday);
+      const totalBlockedUsersTrend = this.countTrends(totalBlockedUsers, totalBlockedUsersYesterday);
+      console.log("TOTAL BLCOKED USERS: ", totalBlockedUsers);
+      console.log("TOTAL BLCOKED USERS TREND: ", totalBlockedUsersTrend);
+      console.log("TESTING: ", await UserModel.countDocuments({ status: "banned", deleted: false, createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }));
 
       return {
         totalUsers,
         totalUsersTrend,
         totalDeletedUsers,
         totalDeletedUsersTrend,
+        totalBlockedUsers,
+        totalBlockedUsersTrend,
       };
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to get user statistics");
@@ -157,6 +170,10 @@ export class UserRepository {
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to update user status");
     }
+  }
+
+  private countTrends(totalToday: number, totalYesterday: number): number {
+    return totalYesterday > 0 ? parseFloat((((totalToday - totalYesterday) / totalYesterday) * 100).toFixed(2)) : 0;
   }
 }
 

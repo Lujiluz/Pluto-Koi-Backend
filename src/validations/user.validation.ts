@@ -51,10 +51,12 @@ export const validateRequestQuery = <T>(schema: z.ZodSchema<T>) => {
       const validatedData = schema.parse(req.query);
       console.log("Validated query data:", validatedData);
 
-      // Replace req.query with validated and sanitized data
-      req.query = validatedData as any;
+      // Store validated data in req.query by updating its properties
+      Object.keys(req.query).forEach((key) => delete req.query[key]);
+      Object.assign(req.query, validatedData);
       next();
     } catch (error) {
+      console.log("USER VALIDATION ERROR:", error);
       if (error instanceof z.ZodError) {
         console.error("Validation error:", error);
         const errors = error.issues.map((issue) => {
@@ -88,8 +90,9 @@ export const validateRequestParams = <T>(schema: z.ZodSchema<T>) => {
       const validatedData = schema.parse(req.params);
       console.log("Validated params data:", validatedData);
 
-      // Replace req.params with validated and sanitized data
-      req.params = validatedData as any;
+      // Store validated data in req.params by updating its properties
+      Object.keys(req.params).forEach((key) => delete req.params[key]);
+      Object.assign(req.params, validatedData);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
