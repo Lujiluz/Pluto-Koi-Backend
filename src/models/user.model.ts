@@ -106,6 +106,7 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.index({ deleted: 1 });
+userSchema.index({ email: 1, name: 1, phoneNumber: 1 });
 
 // Hash password before saving
 userSchema.pre<IUser>("save", async function (next) {
