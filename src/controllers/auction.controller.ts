@@ -23,7 +23,7 @@ class AuctionController {
   async createAuction(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       // Extract form data
-      const { itemName, startPrice, endPrice, startDate, endDate, highestBid, endTime, extraTime = 5 } = req.body;
+      const { itemName, note, startPrice, endPrice, startDate, endDate, highestBid, endTime, extraTime = 5 } = req.body;
 
       // Validate required fields
       if (!itemName || !startPrice || !startDate || !endDate) {
@@ -65,6 +65,7 @@ class AuctionController {
       // Prepare auction data
       const auctionData: CreateAuctionData = {
         itemName,
+        note,
         startPrice: parseFloat(startPrice),
         endPrice: endPrice ? parseFloat(endPrice) : undefined,
         startDate,
@@ -113,7 +114,7 @@ class AuctionController {
       const { id } = req.params;
       // Extract form data
       console.log("req.body:", req.body);
-      const { itemName, startPrice, endPrice, startDate, endDate, endTime, highestBid } = req.body;
+      const { itemName, note, startPrice, endPrice, startDate, endDate, endTime, highestBid } = req.body;
 
       // Handle uploaded files
       let mediaFiles: UploadedFile[] = [];
@@ -146,6 +147,7 @@ class AuctionController {
       // Prepare auction data
       const auctionData: Partial<CreateAuctionData> = {
         itemName,
+        note,
         startPrice: parseFloat(startPrice),
         endPrice: endPrice ? parseFloat(endPrice) : undefined,
         startDate,

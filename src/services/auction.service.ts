@@ -9,6 +9,7 @@ import { eventService } from "./event.service.js";
 
 export interface CreateAuctionData {
   itemName: string;
+  note?: string;
   startPrice: number;
   endPrice?: number;
   startDate: string | Date;
@@ -158,6 +159,7 @@ class AuctionService {
       // Prepare auction data for database
       const auctionToCreate = {
         itemName: auctionFields.itemName,
+        note: auctionFields.note || "",
         startPrice: Number(auctionFields.startPrice),
         endPrice: auctionFields.endPrice ? Number(auctionFields.endPrice) : 0,
         startDate,
@@ -261,6 +263,7 @@ class AuctionService {
 
       // Update fields
       if (updatedData.itemName !== undefined) auction.itemName = updatedData.itemName;
+      if (updatedData.note !== undefined) auction.note = updatedData.note;
       if (updatedData.startPrice !== undefined) auction.startPrice = updatedData.startPrice;
       if (updatedData.endPrice !== undefined) auction.endPrice = updatedData.endPrice;
       if (updatedData.startDate !== undefined) auction.startDate = new Date(updatedData.startDate);

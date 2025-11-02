@@ -6,6 +6,7 @@ interface IAuctionMedia {
 
 export interface IAuction extends Document {
   itemName: string;
+  note: string
   startPrice: number;
   endPrice: number;
   startDate: Date;
@@ -21,6 +22,7 @@ export interface IAuction extends Document {
 const auctionSchema = new Schema<IAuction>(
   {
     itemName: { type: String, required: true },
+    note: {type: String, default: ""},
     startPrice: { type: Number, required: true },
     endPrice: { type: Number, required: true, default: 0 },
     startDate: { type: Date, required: true },

@@ -8,6 +8,8 @@ export const createAuctionSchema = z
   .object({
     itemName: z.string().min(1, "Item name is required").max(200, "Item name cannot exceed 200 characters").trim(),
 
+    note: z.string().trim().optional().default(""),
+
     startPrice: z
       .union([z.string(), z.number()])
       .transform((val) => {
