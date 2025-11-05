@@ -184,6 +184,7 @@ export class AuctionActivityService {
 
       // Get current highest bid
       const currentHighestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auctionId));
+      console.log("CURRENT HIGHEST BID: ", currentHighestBid)
 
       // Validate bid amount
       if (currentHighestBid && bidAmount <= currentHighestBid.bidAmount) {
