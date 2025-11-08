@@ -1,10 +1,14 @@
 import { CustomErrorHandler } from "../middleware/errorHandler.js";
 import { ProductModel, IProduct } from "../models/product.model.js";
 import { paginationMetadata } from "../utils/pagination.js";
+import { ProductType } from "../utils/constants.js";
+import { Types } from "mongoose";
 
 export interface CreateProductData {
   productName: string;
   productPrice: number;
+  productType: ProductType;
+  productCategory: string;
   isActive?: boolean;
   media?: { fileUrl: string }[];
 }
@@ -12,6 +16,8 @@ export interface CreateProductData {
 export interface UpdateProductData {
   productName?: string;
   productPrice?: number;
+  productType?: ProductType;
+  productCategory?: string;
   isActive?: boolean;
   media?: { fileUrl: string }[];
 }
@@ -34,7 +40,7 @@ export class ProductRepository {
    */
   async findById(id: string): Promise<IProduct | null> {
     try {
-      return await ProductModel.findById(id);
+      return await ProductModel.findById(id).populate("productCategory", "name description");
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to find product by ID");
     }
@@ -81,7 +87,16 @@ export class ProductRepository {
   /**
    * Get all products with pagination and filtering
    */
-  async findAll(page: number = 1, limit: number = 10, filters: { isActive?: boolean; search?: string } = {}): Promise<{ products: IProduct[]; metadata: any }> {
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    filters: {
+      isActive?: boolean;
+      search?: string;
+      category?: string;
+      type?: ProductType;
+    } = {}
+  ): Promise<{ products: IProduct[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
 
@@ -93,18 +108,23 @@ export class ProductRepository {
         query.isActive = filters.isActive;
       }
 
+      // Filter by category
+      if (filters.category) {
+        query.productCategory = filters.category;
+      }
+
+      // Filter by product type
+      if (filters.type) {
+        query.productType = filters.type;
+      }
+
       // Search by product name
       if (filters.search) {
         query["$text"] = { $search: filters.search };
       }
 
-      const [total] = await Promise.all([
-        ProductModel.countDocuments(query),
-      ]);
-
-      // console.log("updatedProducts: ", updatedProducts);
-
-      const products = await ProductModel.find(query).skip(skip).limit(limit).exec();
+      const total = await ProductModel.countDocuments(query);
+      const products = await ProductModel.find(query).populate("productCategory", "name description").skip(skip).limit(limit).exec();
 
       const metadata = paginationMetadata(page, limit, total);
 
@@ -208,7 +228,9 @@ export class ProductRepository {
       return await ProductModel.find({
         productPrice: { $gte: minPrice, $lte: maxPrice },
         isActive: true,
-      }).sort({ productPrice: 1 });
+      })
+        .populate("productCategory", "name description")
+        .sort({ productPrice: 1 });
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to find products by price range");
     }
@@ -219,7 +241,7 @@ export class ProductRepository {
    */
   async getFeaturedProducts(limit: number = 10): Promise<IProduct[]> {
     try {
-      return await ProductModel.find({ isActive: true }).sort({ createdAt: -1 }).limit(limit);
+      return await ProductModel.find({ isActive: true }).populate("productCategory", "name description").sort({ createdAt: -1 }).limit(limit);
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to get featured products");
     }

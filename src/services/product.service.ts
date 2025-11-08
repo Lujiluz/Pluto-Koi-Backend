@@ -3,10 +3,14 @@ import { CustomErrorHandler } from "../middleware/errorHandler.js";
 import { IProduct } from "../models/product.model.js";
 import { productRepository, CreateProductData, UpdateProductData } from "../repository/product.repository.js";
 import { processUploadedFiles, UploadedFile, validateFiles, deleteFile } from "../utils/fileUpload.js";
+import { ProductType } from "../utils/constants.js";
+import { categoryRepository } from "../repository/category.repository.js";
 
 export interface CreateProductServiceData {
   productName: string;
   productPrice: number;
+  productType: ProductType;
+  productCategory: string;
   isActive?: boolean;
   media?: UploadedFile[];
 }
@@ -14,6 +18,8 @@ export interface CreateProductServiceData {
 export interface UpdateProductServiceData {
   productName?: string;
   productPrice?: number;
+  productType?: ProductType;
+  productCategory?: string;
   isActive?: boolean;
   media?: UploadedFile[];
   keepExistingMedia?: boolean;
@@ -28,14 +34,25 @@ export class ProductService {
       const { media, ...productFields } = productData;
 
       // Validate required fields
-      if (!productFields.productName || !productFields.productPrice) {
-        throw new CustomErrorHandler(400, "Missing required fields: productName, productPrice");
+      if (!productFields.productName || !productFields.productPrice || !productFields.productType || !productFields.productCategory) {
+        throw new CustomErrorHandler(400, "Missing required fields: productName, productPrice, productType, productCategory");
       }
 
       // Check if product name already exists
       const existingProduct = await productRepository.existsByName(productFields.productName);
       if (existingProduct) {
         throw new CustomErrorHandler(409, "Product with this name already exists");
+      }
+
+      // Validate category exists
+      const categoryExists = await categoryRepository.findById(productFields.productCategory);
+      if (!categoryExists) {
+        throw new CustomErrorHandler(400, "Invalid product category");
+      }
+
+      // Validate product type
+      if (!Object.values(ProductType).includes(productFields.productType)) {
+        throw new CustomErrorHandler(400, "Invalid product type");
       }
 
       // Validate price
@@ -65,6 +82,8 @@ export class ProductService {
       const productToCreate: CreateProductData = {
         productName: productFields.productName.trim(),
         productPrice: Number(productFields.productPrice),
+        productType: productFields.productType,
+        productCategory: productFields.productCategory,
         isActive: productFields.isActive !== undefined ? productFields.isActive : true,
         media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
       };
@@ -91,9 +110,9 @@ export class ProductService {
   /**
    * Get all products with pagination and filtering
    */
-  async getAllProducts(page: number = 1, limit: number = 10, isActive?: boolean, search?: string): Promise<GeneralResponse<{ products: IProduct[]; metadata: any; statistics: any }>> {
+  async getAllProducts(page: number = 1, limit: number = 10, isActive?: boolean, search?: string, category?: string, type?: ProductType): Promise<GeneralResponse<{ products: IProduct[]; metadata: any; statistics: any }>> {
     try {
-      const filters: { isActive?: boolean; search?: string } = {};
+      const filters: { isActive?: boolean; search?: string; category?: string; type?: ProductType } = {};
 
       if (isActive !== undefined) {
         filters.isActive = isActive;
@@ -101,6 +120,14 @@ export class ProductService {
 
       if (search) {
         filters.search = search.trim();
+      }
+
+      if (category) {
+        filters.category = category;
+      }
+
+      if (type) {
+        filters.type = type;
       }
 
       const { products, metadata } = await productRepository.findAll(page, limit, filters);
@@ -161,6 +188,19 @@ export class ProductService {
         if (nameExists) {
           throw new CustomErrorHandler(409, "Product with this name already exists");
         }
+      }
+
+      // Validate category if being updated
+      if (productFields.productCategory) {
+        const categoryExists = await categoryRepository.findById(productFields.productCategory);
+        if (!categoryExists) {
+          throw new CustomErrorHandler(400, "Invalid product category");
+        }
+      }
+
+      // Validate product type if being updated
+      if (productFields.productType && !Object.values(ProductType).includes(productFields.productType)) {
+        throw new CustomErrorHandler(400, "Invalid product type");
       }
 
       // Validate price if being updated

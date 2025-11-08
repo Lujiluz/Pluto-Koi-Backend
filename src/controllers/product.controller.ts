@@ -2,6 +2,7 @@ import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
 import { productService, CreateProductServiceData, UpdateProductServiceData } from "../services/product.service.js";
 import { UploadedFile } from "../utils/fileUpload.js";
+import { ProductType } from "../utils/constants.js";
 
 export class ProductController {
   /**
@@ -10,13 +11,13 @@ export class ProductController {
   async createProduct(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       // Extract form data
-      const { productName, productPrice, isActive } = req.body;
+      const { productName, productPrice, productType, productCategory, isActive } = req.body;
 
       // Validate required fields
-      if (!productName || !productPrice) {
+      if (!productName || !productPrice || !productType || !productCategory) {
         res.status(400).json({
           success: false,
-          message: "Missing required fields: productName, productPrice",
+          message: "Missing required fields: productName, productPrice, productType, productCategory",
         });
         return;
       }
@@ -55,6 +56,8 @@ export class ProductController {
       const productData: CreateProductServiceData = {
         productName: productName.trim(),
         productPrice: parseFloat(productPrice),
+        productType: productType as ProductType,
+        productCategory: productCategory.trim(),
         isActive: isActive !== undefined ? isActive === "true" || isActive === true : true,
         media: mediaFiles.length > 0 ? mediaFiles : undefined,
       };
@@ -76,6 +79,8 @@ export class ProductController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
+      const category = req.query.category as string;
+      const type = req.query.type as ProductType;
 
       // Handle isActive filter
       let isActive: boolean | undefined = undefined;
@@ -83,7 +88,7 @@ export class ProductController {
         isActive = req.query.isActive === "true";
       }
 
-      const response = await productService.getAllProducts(page, limit, isActive, search);
+      const response = await productService.getAllProducts(page, limit, isActive, search, category, type);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving products:", error);
@@ -120,7 +125,7 @@ export class ProductController {
   async updateProduct(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const { productName, productPrice, isActive, keepExistingMedia } = req.body;
+      const { productName, productPrice, productType, productCategory, isActive, keepExistingMedia } = req.body;
 
       if (!id) {
         res.status(400).json({
@@ -167,6 +172,14 @@ export class ProductController {
 
       if (productPrice !== undefined) {
         updateData.productPrice = parseFloat(productPrice);
+      }
+
+      if (productType !== undefined) {
+        updateData.productType = productType as ProductType;
+      }
+
+      if (productCategory !== undefined) {
+        updateData.productCategory = productCategory.trim();
       }
 
       if (isActive !== undefined) {

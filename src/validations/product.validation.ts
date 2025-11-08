@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
+import { ProductType } from "../utils/constants.js";
 
 /**
  * Zod schema for creating a product
@@ -15,6 +16,15 @@ export const createProductSchema = z.object({
       return num;
     })
     .refine((val) => val > 0, "Product price must be greater than 0"),
+
+  productType: z.enum([ProductType.PRODUK, ProductType.KOI_STORE]).refine((val) => Object.values(ProductType).includes(val), {
+    message: "Product type must be either 'Produk' or 'Koi Store'",
+  }),
+
+  productCategory: z
+    .string()
+    .min(1, "Product category is required")
+    .regex(/^[0-9a-fA-F]{24}$/, "Product category must be a valid ObjectId"),
 
   isActive: z
     .union([z.string(), z.boolean()])
@@ -43,6 +53,18 @@ export const updateProductSchema = z
         return num;
       })
       .refine((val) => val > 0, "Product price must be greater than 0")
+      .optional(),
+
+    productType: z
+      .enum([ProductType.PRODUK, ProductType.KOI_STORE])
+      .refine((val) => Object.values(ProductType).includes(val), {
+        message: "Product type must be either 'Produk' or 'Koi Store'",
+      })
+      .optional(),
+
+    productCategory: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, "Product category must be a valid ObjectId")
       .optional(),
 
     isActive: z
@@ -119,6 +141,18 @@ export const productQuerySchema = z.object({
     .optional(),
 
   search: z.string().max(100, "Search term cannot exceed 100 characters").trim().default("").optional(),
+
+  category: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId")
+    .optional(),
+
+  type: z
+    .enum([ProductType.PRODUK, ProductType.KOI_STORE])
+    .refine((val) => Object.values(ProductType).includes(val), {
+      message: "Product type must be either 'Produk' or 'Koi Store'",
+    })
+    .optional(),
 });
 
 /**

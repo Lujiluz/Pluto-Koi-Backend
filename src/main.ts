@@ -5,6 +5,7 @@ import apiRoutes from "./routes/index.js";
 import { skipLogging, errorLoggingMiddleware, performanceLoggingMiddleware, developmentLoggingMiddleware } from "./middleware/logging.middleware.js";
 import { logger } from "./utils/logger.js";
 import { websocketService } from "./services/websocket.service.js";
+import { seedCategories } from "./utils/seedData.js";
 import { config } from "dotenv";
 config();
 
@@ -88,6 +89,9 @@ async function startServer() {
 
     const dbConfig = DatabaseConfig.getInstance();
     await dbConfig.connect();
+
+    // Seed default categories
+    await seedCategories();
 
     // Initialize WebSocket service
     websocketService.initialize(httpServer);
