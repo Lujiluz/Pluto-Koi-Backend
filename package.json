@@ -8,6 +8,7 @@
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "test:wishlist": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPatterns=wishlist",
+    "seed:user-address": "tsx --env-file .env src/scripts/seedUserAddresses.ts",
     "dev": "tsx --watch --env-file .env src/main.ts",
     "start": "node dist/main.js",
     "build": "tsc",

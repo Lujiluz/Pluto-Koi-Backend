@@ -18,7 +18,15 @@ const addressSchema = z.object({
  */
 export const guestPurchaseSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
-  quantity: z.number().int().min(1, "Quantity must be at least 1").default(1),
+  quantity: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === "" || val === undefined || val === null) return 0;
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error("Invalid quantity");
+      return num;
+    })
+    .refine((val) => val >= 1, "Quantity must be 1 or greater"),
 
   // Guest buyer information
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(50, "Name cannot exceed 50 characters"),
@@ -36,7 +44,15 @@ export const guestPurchaseSchema = z.object({
  */
 export const userPurchaseSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
-  quantity: z.number().int().min(1, "Quantity must be at least 1").default(1),
+  quantity: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === "" || val === undefined || val === null) return 0;
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error("Invalid quantity");
+      return num;
+    })
+    .refine((val) => val >= 1, "Quantity must be 1 or greater"),
 });
 
 /**

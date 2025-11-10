@@ -1,5 +1,6 @@
 import { CategoryModel } from "../models/category.model.js";
 import { DEFAULT_CATEGORIES } from "../utils/constants.js";
+import { seedUserAddresses } from "./userAddressSeeder.js";
 
 /**
  * Seed default categories if they don't exist
@@ -40,5 +41,22 @@ export async function getCategoryIdByName(categoryName: string): Promise<string 
   } catch (error) {
     console.error("Error getting category by name:", error);
     return null;
+  }
+}
+
+/**
+ * Run all seeders
+ */
+export async function runAllSeeders(): Promise<void> {
+  try {
+    console.log("🌱 Starting all seeders...");
+
+    await seedCategories();
+    await seedUserAddresses();
+
+    console.log("✅ All seeders completed successfully!");
+  } catch (error) {
+    console.error("❌ Error running seeders:", error);
+    throw error;
   }
 }
