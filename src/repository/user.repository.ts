@@ -6,7 +6,15 @@ export interface CreateUserData {
   name: string;
   email: string;
   password: string;
+  phoneNumber: string;
   role?: UserRole;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
 }
 
 export interface UpdateUserData {

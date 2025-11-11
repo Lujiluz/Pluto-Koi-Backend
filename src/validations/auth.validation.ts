@@ -29,15 +29,13 @@ export const registerSchema = z.object({
 
   role: z.nativeEnum(UserRole).default(UserRole.END_USER),
 
-  address: z
-    .object({
-      street: z.string().trim().min(1, "Street is required"),
-      city: z.string().trim().min(1, "City is required"),
-      state: z.string().trim().min(1, "State is required"),
-      zipCode: z.string().trim().min(1, "Zip code is required"),
-      country: z.string().trim().min(1, "Country is required"),
-    })
-    .optional(),
+  address: z.object({
+    street: z.string().trim().min(1, "Street is required"),
+    city: z.string().trim().min(1, "City is required"),
+    state: z.string().trim().min(1, "State is required"),
+    zipCode: z.string().trim().min(1, "Zip code is required"),
+    country: z.string().trim().min(1, "Country is required"),
+  }),
 });
 
 /**
