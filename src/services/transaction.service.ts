@@ -171,9 +171,7 @@ export class TransactionService {
     pagination: PaginationOptions
   ): Promise<{
     transactions: ITransaction[];
-    total: number;
-    page: number;
-    pages: number;
+    metadata: any
   }> {
     try {
       return await transactionRepository.findAll(filters, pagination);

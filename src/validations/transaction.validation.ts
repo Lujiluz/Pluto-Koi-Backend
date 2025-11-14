@@ -138,10 +138,12 @@ export const validateQueryParams = <T>(schema: z.ZodSchema<T>) => {
       const validatedData = schema.parse(queryData);
       console.log("Validated query params:", validatedData);
 
-      // Replace req.query with validated data
-      req.query = validatedData as any;
+      // Store validated data in req.query by updating its properties
+      Object.keys(req.query).forEach((key) => delete req.query[key]);
+      Object.assign(req.query, validatedData);
       next();
     } catch (error) {
+      console.error("ERROR VALIDATING QUERY PARAMS: ", error);
       if (error instanceof z.ZodError) {
         console.error("Query validation error:", error);
         const errors = error.issues.map((issue) => {

@@ -125,12 +125,7 @@ export class TransactionController {
         success: true,
         message: "Transactions retrieved successfully",
         data: result.transactions,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages,
-          limit: pagination.limit,
-        },
+        metadata: result.metadata,
       });
     } catch (error) {
       console.error("Error in getAllTransactions controller:", error);

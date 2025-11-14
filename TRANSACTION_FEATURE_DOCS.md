@@ -147,7 +147,14 @@ Located: `src/models/transaction.model.ts`
      "success": true,
      "message": "Your transactions retrieved successfully",
      "data": [transaction objects],
-     "pagination": { ... }
+     "metadata": {
+    page,
+    limit,
+    totalItems,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
    }
    ```
 

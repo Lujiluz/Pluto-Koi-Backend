@@ -1,5 +1,6 @@
 import { TransactionModel, ITransaction, TransactionStatus, PaymentStatus } from "../models/transaction.model.js";
 import { Types } from "mongoose";
+import { paginationMetadata } from "../utils/pagination.js";
 
 export interface TransactionFilter {
   status?: TransactionStatus;
@@ -42,7 +43,7 @@ export class TransactionRepository {
   /**
    * Find all transactions with filters and pagination
    */
-  async findAll(filters: TransactionFilter, pagination: PaginationOptions): Promise<{ transactions: ITransaction[]; total: number; page: number; pages: number }> {
+  async findAll(filters: TransactionFilter, pagination: PaginationOptions): Promise<{ transactions: ITransaction[]; metadata: any}> {
     try {
       const query: any = {};
 
@@ -69,11 +70,11 @@ export class TransactionRepository {
         TransactionModel.countDocuments(query),
       ]);
 
+      const metadata = paginationMetadata(pagination.page, pagination.limit, total);
+
       return {
         transactions,
-        total,
-        page: pagination.page,
-        pages: Math.ceil(total / pagination.limit),
+        metadata
       };
     } catch (error) {
       console.error("Error finding transactions:", error);

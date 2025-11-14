@@ -68,6 +68,8 @@ class AuctionService {
           responseData.eventDetail = eventDetail;
         }
 
+        console.log('RESPONSE DATA: ', responseData)
+
         return {
           status: "success",
           message: "Auctions retrieved successfully",
