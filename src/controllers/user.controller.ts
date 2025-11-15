@@ -15,6 +15,18 @@ class UserController {
     }
   }
 
+  async getUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const result = await userService.getUserById(id);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error retrieving user:", error);
+      next(error);
+    }
+  }
+
   async deleteUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;

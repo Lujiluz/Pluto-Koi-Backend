@@ -19,6 +19,13 @@ router.use([authenticateToken, adminRouteAuthentication]);
 router.get("", validateGetAllUsersQuery, userController.getAllUsers.bind(userController));
 
 /**
+ * @route   GET /api/user/:id
+ * @desc    Get user by ID
+ * @access  Private (Admin only)
+ */
+router.get("/:id", validateUserIdParam, userController.getUserById.bind(userController));
+
+/**
  * @route   PATCH /api/user/:id/block
  * @desc    Block a user (set status to banned)
  * @access  Private (Admin only)
