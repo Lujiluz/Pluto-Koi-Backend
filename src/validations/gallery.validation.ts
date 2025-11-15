@@ -8,6 +8,8 @@ export const gallerySchema = z.object({
 
   handling: z.string().min(2, "Handling must be at least 2 characters").max(100, "Handling must not exceed 100 characters").trim(),
 
+  folderName: z.string().min(2, "Folder name must be at least 2 characters").max(50, "Folder name must not exceed 50 characters").trim().default("General").optional(),
+
   isActive: z.boolean().optional(),
 });
 
@@ -21,6 +23,8 @@ export const updateGallerySchema = z.object({
   owner: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must not exceed 50 characters").trim().optional(),
 
   handling: z.string().min(2, "Handling must be at least 2 characters").max(100, "Handling must not exceed 100 characters").trim().optional(),
+
+  folderName: z.string().min(2, "Folder name must be at least 2 characters").max(50, "Folder name must not exceed 50 characters").trim().optional(),
 
   isActive: z.boolean().optional(),
 
@@ -51,6 +55,8 @@ export const getGalleriesQuerySchema = z.object({
   search: z.string().max(100, "Search term must not exceed 100 characters").trim().optional(),
 
   owner: z.string().max(50, "Owner name must not exceed 50 characters").trim().optional(),
+
+  folderName: z.string().max(50, "Folder name must not exceed 50 characters").trim().optional(),
 });
 
 // Search galleries validation schema

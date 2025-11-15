@@ -8,6 +8,7 @@ export interface CreateGalleryServiceData {
   galleryName: string;
   owner: string;
   handling: string;
+  folderName?: string;
   isActive?: boolean;
   media?: Express.Multer.File[];
 }
@@ -16,6 +17,7 @@ export interface UpdateGalleryServiceData {
   galleryName?: string;
   owner?: string;
   handling?: string;
+  folderName?: string;
   isActive?: boolean;
   media?: Express.Multer.File[];
   keepExistingMedia?: boolean;
@@ -63,6 +65,7 @@ export class GalleryService {
         galleryName: galleryFields.galleryName.trim(),
         owner: galleryFields.owner.trim(),
         handling: galleryFields.handling.trim(),
+        folderName: galleryFields.folderName?.trim() || "General",
         isActive: galleryFields.isActive !== undefined ? galleryFields.isActive : true,
         media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
       };
@@ -89,9 +92,9 @@ export class GalleryService {
   /**
    * Get all galleries with pagination and filtering
    */
-  async getAllGalleries(page: number = 1, limit: number = 10, isActive?: boolean, search?: string, owner?: string): Promise<GeneralResponse<{ galleries: IGallery[]; metadata: any; statistics: any }>> {
+  async getAllGalleries(page: number = 1, limit: number = 10, isActive?: boolean, search?: string, owner?: string, folderName?: string): Promise<GeneralResponse<{ galleries: IGallery[]; metadata: any; statistics: any }>> {
     try {
-      const filters: { isActive?: boolean; search?: string; owner?: string } = {};
+      const filters: { isActive?: boolean; search?: string; owner?: string; folderName?: string } = {};
 
       if (isActive !== undefined) {
         filters.isActive = isActive;
@@ -105,8 +108,12 @@ export class GalleryService {
         filters.owner = owner.trim();
       }
 
+      if (folderName) {
+        filters.folderName = folderName.trim();
+      }
+
       const { galleries, metadata } = await galleryRepository.findAll(page, limit, filters);
-      const statistics = await galleryRepository.getGalleryStats();
+      const statistics = await galleryRepository.getGalleryStatsWithFolders();
 
       return {
         status: "success",

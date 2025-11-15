@@ -6,6 +6,7 @@ export interface CreateGalleryData {
   galleryName: string;
   owner: string;
   handling: string;
+  folderName?: string;
   isActive?: boolean;
   media?: { fileUrl: string }[];
 }
@@ -14,6 +15,7 @@ export interface UpdateGalleryData {
   galleryName?: string;
   owner?: string;
   handling?: string;
+  folderName?: string;
   isActive?: boolean;
   media?: { fileUrl: string }[];
 }
@@ -83,7 +85,7 @@ export class GalleryRepository {
   /**
    * Get all galleries with pagination and filtering
    */
-  async findAll(page: number = 1, limit: number = 10, filters: { isActive?: boolean; search?: string; owner?: string } = {}): Promise<{ galleries: IGallery[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, filters: { isActive?: boolean; search?: string; owner?: string; folderName?: string } = {}): Promise<{ galleries: IGallery[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
 
@@ -105,9 +107,12 @@ export class GalleryRepository {
         query.owner = { $regex: filters.owner, $options: "i" };
       }
 
-      const [total] = await Promise.all([
-        GalleryModel.countDocuments(query),
-      ]);
+      // Filter by folder name
+      if (filters.folderName) {
+        query.folderName = filters.folderName;
+      }
+
+      const [total] = await Promise.all([GalleryModel.countDocuments(query)]);
 
       const galleries = await GalleryModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
@@ -269,6 +274,132 @@ export class GalleryRepository {
       ]);
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to get galleries with media count");
+    }
+  }
+
+  /**
+   * Get galleries by folder name
+   */
+  async findByFolderName(folderName: string, isActive: boolean = true): Promise<IGallery[]> {
+    try {
+      const query: any = { folderName };
+      if (isActive !== undefined) {
+        query.isActive = isActive;
+      }
+
+      return await GalleryModel.find(query).sort({ createdAt: -1 });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to find galleries by folder name");
+    }
+  }
+
+  /**
+   * Update gallery folder assignment
+   */
+  async updateGalleryFolder(galleryId: string, folderName: string): Promise<IGallery | null> {
+    try {
+      return await GalleryModel.findByIdAndUpdate(galleryId, { folderName }, { new: true, runValidators: true });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to update gallery folder assignment");
+    }
+  }
+
+  /**
+   * Move all galleries from one folder to another
+   */
+  async moveGalleriesBetweenFolders(fromFolderName: string, toFolderName: string): Promise<number> {
+    try {
+      const result = await GalleryModel.updateMany({ folderName: fromFolderName }, { folderName: toFolderName });
+      return result.modifiedCount;
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to move galleries between folders");
+    }
+  }
+
+  /**
+   * Get gallery statistics with folder breakdown
+   */
+  async getGalleryStatsWithFolders(): Promise<{
+    totalGalleries: number;
+    activeGalleries: number;
+    inactiveGalleries: number;
+    totalMediaFiles: number;
+    galleriesByOwner: { owner: string; count: number }[];
+    galleriesByFolder: { folderName: string; count: number }[];
+  }> {
+    try {
+      const [stats, mediaStats, ownerStats, folderStats] = await Promise.all([
+        GalleryModel.aggregate([
+          {
+            $group: {
+              _id: null,
+              totalGalleries: { $sum: 1 },
+              activeGalleries: {
+                $sum: { $cond: ["$isActive", 1, 0] },
+              },
+              inactiveGalleries: {
+                $sum: { $cond: ["$isActive", 0, 1] },
+              },
+            },
+          },
+        ]),
+        GalleryModel.aggregate([
+          {
+            $group: {
+              _id: null,
+              totalMediaFiles: { $sum: { $size: "$media" } },
+            },
+          },
+        ]),
+        GalleryModel.aggregate([
+          {
+            $group: {
+              _id: "$owner",
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $limit: 10 },
+        ]),
+        GalleryModel.aggregate([
+          {
+            $group: {
+              _id: "$folderName",
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+        ]),
+      ]);
+
+      const galleryStats = stats[0] || {
+        totalGalleries: 0,
+        activeGalleries: 0,
+        inactiveGalleries: 0,
+      };
+
+      const mediaData = mediaStats[0] || { totalMediaFiles: 0 };
+
+      const ownerData = ownerStats.map((item) => ({
+        owner: item._id,
+        count: item.count,
+      }));
+
+      const folderData = folderStats.map((item) => ({
+        folderName: item._id || "General",
+        count: item.count,
+      }));
+
+      return {
+        totalGalleries: galleryStats.totalGalleries,
+        activeGalleries: galleryStats.activeGalleries,
+        inactiveGalleries: galleryStats.inactiveGalleries,
+        totalMediaFiles: mediaData.totalMediaFiles,
+        galleriesByOwner: ownerData,
+        galleriesByFolder: folderData,
+      };
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to get gallery statistics with folders");
     }
   }
 }
