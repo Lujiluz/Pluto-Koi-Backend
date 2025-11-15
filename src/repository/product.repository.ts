@@ -124,7 +124,7 @@ export class ProductRepository {
       }
 
       const total = await ProductModel.countDocuments(query);
-      const products = await ProductModel.find(query).populate("productCategory", "name description").skip(skip).limit(limit).exec();
+      const products = await ProductModel.find(query).populate("productCategory", "name description").skip(skip).limit(limit).sort({ createdAt: -1 }).exec();
 
       const metadata = paginationMetadata(page, limit, total);
 
