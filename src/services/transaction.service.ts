@@ -4,6 +4,7 @@ import { userRepository } from "../repository/user.repository.js";
 import { ITransaction, TransactionStatus, PaymentStatus, IBuyerInfo } from "../models/transaction.model.js";
 import { CustomErrorHandler } from "../middleware/errorHandler.js";
 import { GuestPurchaseInput, UserPurchaseInput, UpdateTransactionStatusInput } from "../validations/transaction.validation.js";
+import { processPaymentProof, UploadedFile } from "../utils/fileUpload.js";
 
 export class TransactionService {
   /**
@@ -11,7 +12,7 @@ export class TransactionService {
    */
   async createGuestTransaction(
     purchaseData: GuestPurchaseInput,
-    paymentProofUrl: string
+    paymentProofFile: Express.Multer.File
   ): Promise<{
     success: boolean;
     message: string;
@@ -27,6 +28,18 @@ export class TransactionService {
       if (!product.isActive) {
         throw new CustomErrorHandler(400, "Product is not available for purchase");
       }
+
+      // Process payment proof file
+      const uploadedFile: UploadedFile = {
+        originalname: paymentProofFile.originalname,
+        filename: paymentProofFile.filename,
+        path: paymentProofFile.path,
+        size: paymentProofFile.size,
+        mimetype: paymentProofFile.mimetype,
+        buffer: paymentProofFile.buffer,
+      };
+
+      const paymentProofData = await processPaymentProof(uploadedFile);
 
       // Calculate total amount
       const totalAmount = product.productPrice * purchaseData.quantity;
@@ -48,7 +61,7 @@ export class TransactionService {
         quantity: purchaseData.quantity,
         totalAmount,
         buyerInfo,
-        paymentProof: paymentProofUrl,
+        paymentProof: paymentProofData.fileUrl,
         paymentStatus: PaymentStatus.PENDING,
         status: TransactionStatus.PENDING,
       });
@@ -73,7 +86,7 @@ export class TransactionService {
   async createUserTransaction(
     userId: string,
     purchaseData: UserPurchaseInput,
-    paymentProofUrl: string
+    paymentProofFile: Express.Multer.File
   ): Promise<{
     success: boolean;
     message: string;
@@ -105,6 +118,18 @@ export class TransactionService {
         throw new CustomErrorHandler(400, "Product is not available for purchase");
       }
 
+      // Process payment proof file
+      const uploadedFile: UploadedFile = {
+        originalname: paymentProofFile.originalname,
+        filename: paymentProofFile.filename,
+        path: paymentProofFile.path,
+        size: paymentProofFile.size,
+        mimetype: paymentProofFile.mimetype,
+        buffer: paymentProofFile.buffer,
+      };
+
+      const paymentProofData = await processPaymentProof(uploadedFile);
+
       // Calculate total amount
       const totalAmount = product.productPrice * purchaseData.quantity;
 
@@ -125,7 +150,7 @@ export class TransactionService {
         quantity: purchaseData.quantity,
         totalAmount,
         buyerInfo,
-        paymentProof: paymentProofUrl,
+        paymentProof: paymentProofData.fileUrl,
         paymentStatus: PaymentStatus.PENDING,
         status: TransactionStatus.PENDING,
       });
@@ -171,7 +196,7 @@ export class TransactionService {
     pagination: PaginationOptions
   ): Promise<{
     transactions: ITransaction[];
-    metadata: any
+    metadata: any;
   }> {
     try {
       return await transactionRepository.findAll(filters, pagination);

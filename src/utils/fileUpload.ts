@@ -14,7 +14,7 @@ export interface UploadedFile {
 
 // Ensure upload directories exist
 const createUploadDirectories = () => {
-  const dirs = ["public/media", "public/media/auctions", "public/media/products", "public/media/gallery"];
+  const dirs = ["public/media", "public/media/auctions", "public/media/products", "public/media/gallery", "public/media/transactions"];
 
   dirs.forEach((dir) => {
     if (!fs.existsSync(dir)) {
@@ -57,7 +57,7 @@ export const generateUniqueFilename = (originalName: string): string => {
 };
 
 // Save file to disk
-export const saveFile = (file: UploadedFile, category: "auctions" | "products" | "gallery" = "auctions"): Promise<string> => {
+export const saveFile = (file: UploadedFile, category: "auctions" | "products" | "gallery" | "transactions" = "auctions"): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
       const uploadPath = `public/media/${category}`;
@@ -81,7 +81,7 @@ export const saveFile = (file: UploadedFile, category: "auctions" | "products" |
 };
 
 // Utility function to get file URL
-export const getFileUrl = (filename: string, category: "auctions" | "products" | "gallery" = "auctions"): string => {
+export const getFileUrl = (filename: string, category: "auctions" | "products" | "gallery" | "transactions" = "auctions"): string => {
   const baseUrl = process.env.BASE_URL || "http://localhost:3000";
   return `${baseUrl}/media/${category}/${filename}`;
 };
@@ -122,7 +122,7 @@ export const validateFiles = (files: UploadedFile[], maxFiles: number = 10): { i
 };
 
 // Process uploaded files and return file info
-export const processUploadedFiles = async (files: UploadedFile[], category: "auctions" | "products" | "gallery" = "auctions") => {
+export const processUploadedFiles = async (files: UploadedFile[], category: "auctions" | "products" | "gallery" | "transactions" = "auctions") => {
   const processedFiles = [];
 
   for (const file of files) {
@@ -142,4 +142,29 @@ export const processUploadedFiles = async (files: UploadedFile[], category: "auc
   }
 
   return processedFiles;
+};
+
+// Process single payment proof file
+export const processPaymentProof = async (file: UploadedFile): Promise<{ fileUrl: string; filename: string }> => {
+  try {
+    // Validate the payment proof file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      throw new Error(`Payment proof validation failed: ${validation.error}`);
+    }
+
+    // Save the file
+    const filename = await saveFile(file, "transactions");
+
+    // Generate the full URL
+    const fileUrl = getFileUrl(filename, "transactions");
+
+    return {
+      fileUrl,
+      filename,
+    };
+  } catch (error) {
+    console.error("Error processing payment proof:", error);
+    throw new Error(`Failed to process payment proof: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 };

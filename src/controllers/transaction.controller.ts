@@ -18,11 +18,8 @@ export class TransactionController {
         throw new CustomErrorHandler(400, "Payment proof image is required");
       }
 
-      // Get the uploaded file URL
-      const paymentProofUrl = `/media/transactions/${req.file.filename}`;
-
-      // Create transaction
-      const result = await transactionService.createGuestTransaction(purchaseData, paymentProofUrl);
+      // Create transaction (service will handle file processing)
+      const result = await transactionService.createGuestTransaction(purchaseData, req.file);
 
       res.status(201).json({
         success: result.success,
@@ -53,11 +50,8 @@ export class TransactionController {
         throw new CustomErrorHandler(400, "Payment proof image is required");
       }
 
-      // Get the uploaded file URL
-      const paymentProofUrl = `/media/transactions/${req.file.filename}`;
-
-      // Create transaction
-      const result = await transactionService.createUserTransaction(req.user.id, purchaseData, paymentProofUrl);
+      // Create transaction (service will handle file processing)
+      const result = await transactionService.createUserTransaction(req.user.id, purchaseData, req.file);
 
       res.status(201).json({
         success: result.success,
