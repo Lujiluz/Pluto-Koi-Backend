@@ -5,14 +5,14 @@ import { authenticateToken } from "../middleware/auth.middleware.js";
 const router = Router();
 
 // Apply authentication middleware to all routes
-router.use(authenticateToken);
+// router.use();
 
 /**
  * @route POST /api/gallery-folders
  * @desc Create a new gallery folder
  * @access Private
  */
-router.post("/", galleryFolderController.createGalleryFolder);
+router.post("/", authenticateToken,galleryFolderController.createGalleryFolder);
 
 /**
  * @route GET /api/gallery-folders
@@ -23,14 +23,23 @@ router.post("/", galleryFolderController.createGalleryFolder);
  * @query isActive - Filter by active status (optional)
  * @query search - Search term for folder name or description (optional)
  */
-router.get("/", galleryFolderController.getAllGalleryFolders);
+router.get("/", authenticateToken, galleryFolderController.getAllGalleryFolders);
+
 
 /**
  * @route GET /api/gallery-folders/active
  * @desc Get all active gallery folders (for dropdown/selection purposes)
  * @access Private
  */
-router.get("/active", galleryFolderController.getActiveGalleryFolders);
+router.get("/active", authenticateToken, galleryFolderController.getActiveGalleryFolders);
+
+/**
+ * @route GET /api/gallery-folders/active/public
+ * @desc Get all gallery folders
+ * @access Public
+ */
+router.get("/active/public", galleryFolderController.getAllGalleryFolders);
+
 
 /**
  * @route GET /api/gallery-folders/search
@@ -38,21 +47,21 @@ router.get("/active", galleryFolderController.getActiveGalleryFolders);
  * @access Private
  * @query q - Search query (required, min 2 characters)
  */
-router.get("/search", galleryFolderController.searchGalleryFolders);
+router.get("/search", authenticateToken,galleryFolderController.searchGalleryFolders);
 
 /**
  * @route GET /api/gallery-folders/with-gallery-count
  * @desc Get gallery folders with gallery count
  * @access Private
  */
-router.get("/with-gallery-count", galleryFolderController.getGalleryFoldersWithGalleryCount);
+router.get("/with-gallery-count", authenticateToken,galleryFolderController.getGalleryFoldersWithGalleryCount);
 
 /**
  * @route POST /api/gallery-folders/ensure-general
  * @desc Ensure General folder exists (initialization endpoint)
  * @access Private
  */
-router.post("/ensure-general", galleryFolderController.ensureGeneralFolderExists);
+router.post("/ensure-general", authenticateToken,galleryFolderController.ensureGeneralFolderExists);
 
 /**
  * @route GET /api/gallery-folders/name/:folderName
@@ -60,7 +69,7 @@ router.post("/ensure-general", galleryFolderController.ensureGeneralFolderExists
  * @access Private
  * @param folderName - Name of the folder
  */
-router.get("/name/:folderName", galleryFolderController.getGalleryFolderByName);
+router.get("/name/:folderName", authenticateToken,galleryFolderController.getGalleryFolderByName);
 
 /**
  * @route GET /api/gallery-folders/:folderId
@@ -68,7 +77,7 @@ router.get("/name/:folderName", galleryFolderController.getGalleryFolderByName);
  * @access Private
  * @param folderId - ID of the gallery folder
  */
-router.get("/:folderId", galleryFolderController.getGalleryFolderById);
+router.get("/:folderId", authenticateToken,galleryFolderController.getGalleryFolderById);
 
 /**
  * @route PUT /api/gallery-folders/:folderId
@@ -76,7 +85,7 @@ router.get("/:folderId", galleryFolderController.getGalleryFolderById);
  * @access Private
  * @param folderId - ID of the gallery folder
  */
-router.put("/:folderId", galleryFolderController.updateGalleryFolder);
+router.put("/:folderId", authenticateToken,galleryFolderController.updateGalleryFolder);
 
 /**
  * @route PATCH /api/gallery-folders/:folderId/toggle-status
@@ -84,7 +93,7 @@ router.put("/:folderId", galleryFolderController.updateGalleryFolder);
  * @access Private
  * @param folderId - ID of the gallery folder
  */
-router.patch("/:folderId/toggle-status", galleryFolderController.toggleGalleryFolderStatus);
+router.patch("/:folderId/toggle-status", authenticateToken,galleryFolderController.toggleGalleryFolderStatus);
 
 /**
  * @route DELETE /api/gallery-folders/:folderId
@@ -93,7 +102,7 @@ router.patch("/:folderId/toggle-status", galleryFolderController.toggleGalleryFo
  * @param folderId - ID of the gallery folder
  * @note Moves all galleries in this folder to "General" folder before deletion
  */
-router.delete("/:folderId", galleryFolderController.deleteGalleryFolder);
+router.delete("/:folderId", authenticateToken,galleryFolderController.deleteGalleryFolder);
 
 /**
  * @route DELETE /api/gallery-folders/:folderId/permanent
@@ -102,6 +111,6 @@ router.delete("/:folderId", galleryFolderController.deleteGalleryFolder);
  * @param folderId - ID of the gallery folder
  * @note Moves all galleries in this folder to "General" folder before deletion
  */
-router.delete("/:folderId/permanent", galleryFolderController.permanentlyDeleteGalleryFolder);
+router.delete("/:folderId/permanent", authenticateToken,galleryFolderController.permanentlyDeleteGalleryFolder);
 
 export default router;

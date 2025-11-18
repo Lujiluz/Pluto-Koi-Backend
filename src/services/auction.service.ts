@@ -213,6 +213,7 @@ class AuctionService {
       const auction = await auctionRepository.findById(auctionId);
 
       const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auction?._id as string));
+      console.log('HIGHEST BID: ', highestBid);
 
       if (highestBid) {
         await auctionRepository.update(auction?._id as string, { highestBid: highestBid.bidAmount });
