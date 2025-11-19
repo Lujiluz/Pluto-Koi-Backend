@@ -193,6 +193,30 @@ export class AuctionActivityController {
       next(error);
     }
   }
+
+  /**
+   * Get all auctions where the user has placed bids
+   */
+  async getUserBidAuctions(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "Authentication required",
+        });
+        return;
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const result = await auctionActivityService.getUserBidAuctions(req.user.id, page, limit);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error getting user bid auctions:", error);
+      next(error);
+    }
+  }
 }
 
 export const auctionActivityController = new AuctionActivityController();

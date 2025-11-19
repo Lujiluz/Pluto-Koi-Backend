@@ -184,7 +184,7 @@ export class AuctionActivityService {
 
       // Get current highest bid
       const currentHighestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auctionId));
-      console.log("CURRENT HIGHEST BID: ", currentHighestBid)
+      console.log("CURRENT HIGHEST BID: ", currentHighestBid);
 
       // Validate bid amount
       if (currentHighestBid && bidAmount <= currentHighestBid.bidAmount) {
@@ -447,6 +447,112 @@ export class AuctionActivityService {
     } catch (error) {
       console.error("Error getting auction stats:", error);
       throw new CustomErrorHandler(500, "Failed to get auction statistics");
+    }
+  }
+
+  /**
+   * Get all auctions where user has placed bids
+   */
+  async getUserBidAuctions(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<
+    GeneralResponse<{
+      auctions: any[];
+      metadata: any;
+    }>
+  > {
+    try {
+      const skip = (page - 1) * limit;
+      const userObjectId = new Types.ObjectId(userId);
+
+      // Get distinct auction IDs where user has placed bids
+      const distinctAuctionIds = await AuctionActivityModel.distinct("auctionId", { userId: userObjectId });
+
+      // Get total count for pagination
+      const total = distinctAuctionIds.length;
+
+      // Get paginated auction IDs
+      const paginatedAuctionIds = distinctAuctionIds.slice(skip, skip + limit);
+
+      // Get auction details and user's bid information for each auction
+      const auctionDetails = await Promise.all(
+        paginatedAuctionIds.map(async (auctionId) => {
+          // Get auction information
+          const auction = await AuctionModel.findById(auctionId);
+          if (!auction) return null;
+
+          // Get user's bids for this auction
+          const userBids = await AuctionActivityModel.find({
+            auctionId,
+            userId: userObjectId,
+          }).sort({ createdAt: -1 });
+
+          // Get current highest bid for the auction
+          const currentHighestBid = await AuctionActivityModel.getHighestBidForAuction(auctionId);
+
+          // Calculate user's statistics for this auction
+          const userHighestBid = Math.max(...userBids.map((bid) => bid.bidAmount));
+          const userTotalBids = userBids.length;
+          const userLatestBid = userBids[0];
+          const isCurrentWinner = currentHighestBid?.userId.toString() === userId;
+
+          return {
+            auction: {
+              _id: auction._id,
+              itemName: auction.itemName,
+              note: auction.note,
+              startPrice: auction.startPrice,
+              endPrice: auction.endPrice,
+              startDate: auction.startDate,
+              endDate: auction.endDate,
+              endTime: auction.endTime,
+              extraTime: auction.extraTime,
+              highestBid: auction.highestBid,
+              media: auction.media,
+              createdAt: auction.createdAt,
+              updatedAt: auction.updatedAt,
+            },
+            userBidInfo: {
+              totalBids: userTotalBids,
+              highestBid: userHighestBid,
+              latestBid: {
+                amount: userLatestBid.bidAmount,
+                bidType: userLatestBid.bidType,
+                bidTime: userLatestBid.bidTime,
+              },
+              isCurrentWinner,
+            },
+            currentHighestBid: currentHighestBid?.bidAmount || 0,
+            auctionStatus: new Date() > new Date(auction.endTime) ? "ended" : "active",
+          };
+        })
+      );
+
+      // Filter out any null values (in case some auctions were deleted)
+      const validAuctions = auctionDetails.filter((auction) => auction !== null);
+
+      const metadata = {
+        page,
+        limit,
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
+      };
+
+      return {
+        status: "success",
+        message: "User bid auctions retrieved successfully",
+        data: {
+          auctions: validAuctions,
+          metadata,
+        },
+      };
+    } catch (error) {
+      console.error("Error getting user bid auctions:", error);
+      throw new CustomErrorHandler(500, "Failed to get user bid auctions");
     }
   }
 }

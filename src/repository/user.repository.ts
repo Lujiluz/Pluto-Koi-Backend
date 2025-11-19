@@ -130,12 +130,12 @@ export class UserRepository {
   async getUserStats(): Promise<{ totalUsers: number; totalUsersTrend: number; totalDeletedUsers: number; totalDeletedUsersTrend: number; totalBlockedUsers: number; totalBlockedUsersTrend: number }> {
     try {
       const [totalUsers, totalDeletedUsers, totalBlockedUsers, totalUsersYesterday, totalDeletedUsersYesterday, totalBlockedUsersYesterday] = await Promise.all([
-        UserModel.countDocuments({ deleted: false }),
-        UserModel.countDocuments({ deleted: true }),
-        await UserModel.countDocuments({ status: "banned", deleted: false }),
-        UserModel.countDocuments({ deleted: false, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
-        UserModel.countDocuments({ deleted: true, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
-        UserModel.countDocuments({ status: "banned", deleted: false, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ deleted: false, role: {$ne: "admin"} }),
+        UserModel.countDocuments({ deleted: true, role: {$ne: "admin"} }),
+        await UserModel.countDocuments({ status: "banned", deleted: false, role: {$ne: "admin"} }),
+        UserModel.countDocuments({ deleted: false, role: {$ne: "admin"}, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ deleted: true, role: {$ne: "admin"}, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ status: "banned", deleted: false, role: {$ne: "admin"}, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
       ]);
 
       const totalUsersTrend = this.countTrends(totalUsers, totalUsersYesterday);

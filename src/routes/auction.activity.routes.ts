@@ -44,6 +44,13 @@ router.get("/auction/:auctionId/stats", validateAuctionIdParam, auctionActivityC
 router.get("/auction/:auctionId/user/:userId/history", validateAuctionIdParam, auctionActivityController.getUserAuctionHistory.bind(auctionActivityController));
 
 /**
+ * @route   GET /api/auction-activity/my-auctions
+ * @desc    Get all auctions where the user has placed bids
+ * @access  Private
+ */
+router.get("/my-auctions", validatePaginationQuery, auctionActivityController.getUserBidAuctions.bind(auctionActivityController));
+
+/**
  * @route   GET /api/auction-activity/all
  * @desc    Get all auction activities (admin only)
  * @access  Private (Admin only)
