@@ -533,6 +533,25 @@ export class AuctionActivityService {
       // Filter out any null values (in case some auctions were deleted)
       const validAuctions = auctionDetails.filter((auction) => auction !== null);
 
+      // if there's no auctions, return empty array
+      if (validAuctions.length === 0) {
+        return {
+          status: "success",
+          message: "No auctions found for user bids",
+          data: {
+            auctions: [],
+            metadata: {
+              page,
+              limit,
+              totalItems: 0,
+              totalPages: 0,
+              hasNextPage: false,
+              hasPreviousPage: false,
+            },
+          },
+        };
+      }
+
       const metadata = {
         page,
         limit,
