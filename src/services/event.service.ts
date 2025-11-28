@@ -23,7 +23,7 @@ class EventService {
       return {
         status: "success",
         message: event ? "Active event retrieved successfully" : "No active event found",
-        data: event,
+        data: { ...event },
       };
     } catch (error) {
       console.error("Error retrieving active event:", error);
@@ -59,18 +59,14 @@ class EventService {
   }
 
   /**
-   * Create a new event
+   * Create a new event (actually upserts - updates if exists, creates if doesn't)
    * @param eventData - Event data
-   * @returns The created event
+   * @returns The created/updated event
    */
   async createEvent(eventData: CreateEventData): Promise<GeneralResponse<IEvent>> {
     try {
-      // If creating an active event, deactivate all other events first
-      if (eventData.isActive) {
-        await eventRepository.deactivateAllEvents();
-      }
-
-      const event = await eventRepository.create({
+      // Upsert the event (update if exists, create if doesn't)
+      const event = await eventRepository.upsertEvent({
         isActive: eventData.isActive,
         totalBidAmount: eventData.totalBidAmount || 0,
       });

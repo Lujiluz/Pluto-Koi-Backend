@@ -97,6 +97,23 @@ class AuctionRepository {
       throw new CustomErrorHandler(500, "Failed to update auction");
     }
   }
+
+  async sumAllBids(): Promise<number> {
+    try {
+      const result = await AuctionModel.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalBidAmount: { $sum: "$highestBid.bidAmount" },
+          },
+        },
+      ]).exec();
+
+      return result[0]?.totalBidAmount || 0;
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to sum all bids");
+    }
+  }
 }
 
 export const auctionRepository = new AuctionRepository();

@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { DatabaseConfig } from "./config/database.js";
 import apiRoutes from "./routes/index.js";
 import { skipLogging, errorLoggingMiddleware, performanceLoggingMiddleware, developmentLoggingMiddleware } from "./middleware/logging.middleware.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 import { logger } from "./utils/logger.js";
 import { websocketService } from "./services/websocket.service.js";
 import { seedCategories } from "./utils/seedData.js";
@@ -62,25 +63,11 @@ app.use("/media", express.static("public/media"));
 // API routes
 app.use(`${process.env.API_PREFIX}`, apiRoutes);
 
-// Database status route
-// app.get(`${process.env.API_PREFIX}/health`, (req, res) => {
-//   const dbConfig = DatabaseConfig.getInstance();
-//   const dbStatus = dbConfig.getStatus();
-
-//   res.json({
-//     api: "healthy",
-//     database: {
-//       connected: dbStatus.isConnected,
-//       readyState: dbStatus.readyState,
-//       host: dbStatus.host,
-//       name: dbStatus.name,
-//     },
-//     timestamp: new Date().toISOString(),
-//   });
-// });
-
-// Error logging middleware
+// Error logging middleware (must be BEFORE error handler)
 app.use(errorLoggingMiddleware);
+
+// Error handler middleware (must be LAST)
+app.use(errorHandler);
 
 async function startServer() {
   try {

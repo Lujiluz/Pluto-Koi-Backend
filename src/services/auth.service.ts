@@ -3,7 +3,7 @@ import { userRepository } from "../repository/user.repository.js";
 import { AuthResponse, JwtPayload, TokenResponse } from "../interfaces/auth.interface.js";
 import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
 import { IUser } from "../models/user.model.js";
-import { CustomErrorHandler } from "../middleware/errorHandler.js";
+import { CustomErrorHandler, ResponseError } from "../middleware/errorHandler.js";
 import { success } from "zod";
 
 export class AuthService {
@@ -71,23 +71,23 @@ export class AuthService {
       // Find user by email
       const user = await userRepository.findByEmail(loginData.email);
       if (!user) {
-        throw new CustomErrorHandler(401, "Invalid email or password");
+        throw ResponseError.unauthorized("Invalid email or password");
       }
 
       // Check if user is banned
       if (user.status === "banned") {
-        throw new CustomErrorHandler(403, "Your account has been blocked. Please contact support.");
+        throw ResponseError.forbidden("Your account has been blocked. Please contact support.");
       }
 
       // Check if user is deleted
       if (user.deleted) {
-        throw new CustomErrorHandler(403, "This account has been deleted");
+        throw ResponseError.forbidden("This account has been deleted");
       }
 
       // Check password
       const isPasswordValid = await user.comparePassword(loginData.password);
       if (!isPasswordValid) {
-        throw new CustomErrorHandler(401, "Invalid email or password");
+        throw ResponseError.unauthorized("Invalid email or password");
       }
 
       // Generate JWT token
