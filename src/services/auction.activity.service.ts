@@ -182,6 +182,15 @@ export class AuctionActivityService {
       if (!auction) throw new CustomErrorHandler(404, "Auction not found");
       if (auction.endTime < bidTime) throw new CustomErrorHandler(400, "Auction has ended");
 
+      // Validate bid amount is a multiple of startPrice
+      const priceMultiplication = auction.priceMultiplication || 1;
+      const minimumBidIncrement = auction.startPrice * priceMultiplication;
+
+      // Check if bid amount is a valid multiple of the base price multiplication
+      if (bidAmount % minimumBidIncrement !== 0) {
+        throw new CustomErrorHandler(400, `Bid amount must be a multiple of ${minimumBidIncrement.toLocaleString("id-ID")} (startPrice: ${auction.startPrice.toLocaleString("id-ID")} × multiplier: ${priceMultiplication})`);
+      }
+
       // Get current highest bid
       const currentHighestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auctionId));
       console.log("CURRENT HIGHEST BID: ", currentHighestBid);
@@ -372,7 +381,7 @@ export class AuctionActivityService {
       const skip = (page - 1) * limit;
 
       const [activities, total] = await Promise.all([
-        AuctionActivityModel.find().populate("userId", "name email role").populate("auctionId", "itemName startPrice endPrice").sort({ createdAt: -1 }).skip(skip).limit(limit),
+        AuctionActivityModel.find().populate("userId", "name email role").populate("auctionId", "itemName startPrice priceMultiplication").sort({ createdAt: -1 }).skip(skip).limit(limit),
         AuctionActivityModel.countDocuments(),
       ]);
 
@@ -504,7 +513,7 @@ export class AuctionActivityService {
               itemName: auction.itemName,
               note: auction.note,
               startPrice: auction.startPrice,
-              endPrice: auction.endPrice,
+              priceMultiplication: auction.priceMultiplication,
               startDate: auction.startDate,
               endDate: auction.endDate,
               endTime: auction.endTime,

@@ -11,7 +11,7 @@ export interface CreateAuctionData {
   itemName: string;
   note?: string;
   startPrice: number;
-  endPrice?: number;
+  priceMultiplication?: number;
   startDate: string | Date;
   endDate: string | Date;
   endTime: string | Date;
@@ -68,7 +68,7 @@ class AuctionService {
           responseData.eventDetail = eventDetail;
         }
 
-        console.log('RESPONSE DATA: ', responseData)
+        console.log("RESPONSE DATA: ", responseData);
 
         return {
           status: "success",
@@ -167,7 +167,7 @@ class AuctionService {
         itemName: auctionFields.itemName,
         note: auctionFields.note || "",
         startPrice: Number(auctionFields.startPrice),
-        endPrice: auctionFields.endPrice ? Number(auctionFields.endPrice) : 0,
+        priceMultiplication: auctionFields.priceMultiplication ? Number(auctionFields.priceMultiplication) : 1,
         startDate,
         endDate,
         endTime,
@@ -213,7 +213,7 @@ class AuctionService {
       const auction = await auctionRepository.findById(auctionId);
 
       const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auction?._id as string));
-      console.log('HIGHEST BID: ', highestBid);
+      console.log("HIGHEST BID: ", highestBid);
 
       if (highestBid) {
         await auctionRepository.update(auction?._id as string, { highestBid: highestBid.bidAmount });
@@ -278,7 +278,7 @@ class AuctionService {
       if (updatedData.itemName !== undefined) auction.itemName = updatedData.itemName;
       if (updatedData.note !== undefined) auction.note = updatedData.note;
       if (updatedData.startPrice !== undefined) auction.startPrice = updatedData.startPrice;
-      if (updatedData.endPrice !== undefined) auction.endPrice = updatedData.endPrice;
+      if (updatedData.priceMultiplication !== undefined) auction.priceMultiplication = updatedData.priceMultiplication;
       if (updatedData.startDate !== undefined) auction.startDate = new Date(updatedData.startDate);
       if (updatedData.endDate !== undefined) {
         const endTimeString = typeof updatedData.endTime === "string" ? updatedData.endTime : updatedData.endTime?.toTimeString().split(" ")[0];

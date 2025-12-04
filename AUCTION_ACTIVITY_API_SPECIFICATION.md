@@ -14,6 +14,35 @@ Authorization: Bearer <token>
 
 ---
 
+## Important: Bid Amount Validation
+
+Starting from this version, all bid amounts **must be exact multiples** of the auction's base price increment:
+
+**Formula**: `Minimum Bid Increment = startPrice × priceMultiplication`
+
+### Example:
+
+If an auction has:
+
+- `startPrice = 30000`
+- `priceMultiplication = 1`
+
+Then valid bids must be multiples of `30000 × 1 = 30000`:
+
+- ✅ Valid: `30000`, `60000`, `90000`, `120000`
+- ❌ Invalid: `25000`, `35000`, `45000`, `55000`
+
+If the bid amount doesn't match this requirement, the API will return:
+
+```json
+{
+  "success": false,
+  "message": "Bid amount must be a multiple of 30000 (startPrice: 30000 × multiplier: 1)"
+}
+```
+
+---
+
 ## Endpoints
 
 ### 1. Place a Bid
@@ -29,7 +58,7 @@ Places a new bid on an auction.
 ```json
 {
   "auctionId": "string (required)",
-  "bidAmount": "number (required, positive)",
+  "bidAmount": "number (required, positive, must be multiple of startPrice × priceMultiplication)",
   "bidType": "string (optional, enum: 'initial' | 'outbid' | 'winning' | 'auto')"
 }
 ```
@@ -37,7 +66,10 @@ Places a new bid on an auction.
 **Validation Rules**:
 
 - `auctionId`: Must be a non-empty string
-- `bidAmount`: Must be a positive number greater than 0
+- `bidAmount`:
+  - Must be a positive number greater than 0
+  - **Must be an exact multiple of `startPrice × priceMultiplication`**
+  - Must be higher than the current highest bid
 - `bidType`: Optional, must be one of: `initial`, `outbid`, `winning`, `auto`
 
 **Success Response** (201 Created):
@@ -73,6 +105,33 @@ Places a new bid on an auction.
 }
 ```
 
+- **403 Forbidden** (User Banned):
+
+```json
+{
+  "success": false,
+  "message": "Your account has been blocked."
+}
+```
+
+- **400 Bad Request** (Invalid Bid Increment):
+
+```json
+{
+  "success": false,
+  "message": "Bid amount must be a multiple of 30000 (startPrice: 30000 × multiplier: 1)"
+}
+```
+
+- **400 Bad Request** (Bid Too Low):
+
+```json
+{
+  "success": false,
+  "message": "Bid must be higher than current highest bid of 90000"
+}
+```
+
 - **400 Bad Request** (Validation Error):
 
 ```json
@@ -101,7 +160,25 @@ Places a new bid on an auction.
 }
 ```
 
-**Example Request**:
+- **400 Bad Request** (Auction Ended):
+
+```json
+{
+  "success": false,
+  "message": "Auction has ended"
+}
+```
+
+- **404 Not Found** (Auction Not Found):
+
+```json
+{
+  "success": false,
+  "message": "Auction not found"
+}
+```
+
+**Example Request** (Valid - Multiple of 30000):
 
 ```bash
 curl -X POST https://api.example.com/api/auction-activity/bid \
@@ -109,9 +186,24 @@ curl -X POST https://api.example.com/api/auction-activity/bid \
   -H "Content-Type: application/json" \
   -d '{
     "auctionId": "507f1f77bcf86cd799439011",
-    "bidAmount": 15000,
+    "bidAmount": 60000,
     "bidType": "initial"
   }'
+```
+
+**Example Request** (Invalid - Not a Multiple):
+
+```bash
+# This will fail if startPrice × priceMultiplication = 30000
+curl -X POST https://api.example.com/api/auction-activity/bid \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "auctionId": "507f1f77bcf86cd799439011",
+    "bidAmount": 45000,
+    "bidType": "initial"
+  }'
+# Error: Bid amount must be a multiple of 30000
 ```
 
 ---

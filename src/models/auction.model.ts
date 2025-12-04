@@ -6,13 +6,13 @@ interface IAuctionMedia {
 
 export interface IAuction extends Document {
   itemName: string;
-  note: string
+  note: string;
   startPrice: number;
-  endPrice: number;
+  priceMultiplication: number;
   startDate: Date;
   endDate: Date;
   endTime: Date;
-  extraTime: number
+  extraTime: number;
   highestBid: number;
   media: IAuctionMedia[];
   createdAt: Date;
@@ -22,9 +22,9 @@ export interface IAuction extends Document {
 const auctionSchema = new Schema<IAuction>(
   {
     itemName: { type: String, required: true },
-    note: {type: String, default: ""},
+    note: { type: String, default: "" },
     startPrice: { type: Number, required: true },
-    endPrice: { type: Number, required: true, default: 0 },
+    priceMultiplication: { type: Number, required: true, default: 1 },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     endTime: { type: Date, required: true },
@@ -39,6 +39,6 @@ const auctionSchema = new Schema<IAuction>(
   { timestamps: true }
 );
 
-auctionSchema.index({'itemName': 'text'})
+auctionSchema.index({ itemName: "text" });
 
 export const AuctionModel = model<IAuction>("Auction", auctionSchema);

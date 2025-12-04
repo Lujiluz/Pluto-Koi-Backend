@@ -40,7 +40,7 @@ GET /api/auction-activity/my-auctions
           "itemName": "Premium Koi Fish",
           "note": "Special auction item",
           "startPrice": 100000,
-          "endPrice": 500000,
+          "priceMultiplication": 1,
           "startDate": "2025-11-01T00:00:00.000Z",
           "endDate": "2025-11-30T23:59:59.000Z",
           "endTime": "2025-11-30T23:59:59.000Z",
@@ -97,7 +97,7 @@ GET /api/auction-activity/my-auctions
 - `itemName`: Name of the item being auctioned
 - `note`: Additional notes about the auction
 - `startPrice`: Starting price for the auction
-- `endPrice`: Final/highest price accepted
+- `priceMultiplication`: Price multiplier to calculate valid bid increments (default: 1)
 - `startDate`: When the auction starts
 - `endDate`: When the auction ends
 - `endTime`: Exact time when auction ends
@@ -106,6 +106,8 @@ GET /api/auction-activity/my-auctions
 - `media`: Array of media files for the auction item
 - `createdAt`: When the auction was created
 - `updatedAt`: When the auction was last updated
+
+**Note**: Valid bid amounts must be exact multiples of `startPrice × priceMultiplication`.
 
 ### User Bid Info
 

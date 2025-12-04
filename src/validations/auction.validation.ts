@@ -19,17 +19,17 @@ export const createAuctionSchema = z
       })
       .refine((val) => val > 0, "Start price must be greater than 0"),
 
-    endPrice: z
+    priceMultiplication: z
       .union([z.string(), z.number()])
       .transform((val) => {
-        if (val === "" || val === undefined || val === null) return 0;
+        if (val === "" || val === undefined || val === null) return 1;
         const num = typeof val === "string" ? parseFloat(val) : val;
-        if (isNaN(num)) throw new Error("Invalid end price");
+        if (isNaN(num)) throw new Error("Invalid price multiplication");
         return num;
       })
-      .refine((val) => val >= 0, "End price must be 0 or greater")
+      .refine((val) => val >= 1, "Price multiplication must be 1 or greater")
       .optional()
-      .default(0),
+      .default(1),
 
     startDate: z
       .union([z.string(), z.date()])
