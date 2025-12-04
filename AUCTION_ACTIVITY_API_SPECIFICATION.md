@@ -16,28 +16,40 @@ Authorization: Bearer <token>
 
 ## Important: Bid Amount Validation
 
-Starting from this version, all bid amounts **must be exact multiples** of the auction's base price increment:
+All bid amounts **must follow the increment pattern** based on the auction's `startPrice` and `priceMultiplication`.
 
-**Formula**: `Minimum Bid Increment = startPrice × priceMultiplication`
+**Formula**: `Valid Bid = startPrice + (n × priceMultiplication)` where n = 0, 1, 2, 3, ...
 
-### Example:
+### Example 1:
+
+If an auction has:
+
+- `startPrice = 50000`
+- `priceMultiplication = 100000`
+
+Then valid bids are:
+
+- ✅ Valid: `50000`, `150000`, `250000`, `350000`
+- ❌ Invalid: `75000`, `100000`, `200000`
+
+### Example 2:
 
 If an auction has:
 
 - `startPrice = 30000`
-- `priceMultiplication = 1`
+- `priceMultiplication = 50000`
 
-Then valid bids must be multiples of `30000 × 1 = 30000`:
+Then valid bids are:
 
-- ✅ Valid: `30000`, `60000`, `90000`, `120000`
-- ❌ Invalid: `25000`, `35000`, `45000`, `55000`
+- ✅ Valid: `30000`, `80000`, `130000`, `180000`
+- ❌ Invalid: `50000`, `100000`, `150000`
 
 If the bid amount doesn't match this requirement, the API will return:
 
 ```json
 {
   "success": false,
-  "message": "Bid amount must be a multiple of 30000 (startPrice: 30000 × multiplier: 1)"
+  "message": "Bid amount must follow increment of 100.000. Valid bids: 50.000, 150.000, 250.000, etc."
 }
 ```
 
@@ -58,7 +70,7 @@ Places a new bid on an auction.
 ```json
 {
   "auctionId": "string (required)",
-  "bidAmount": "number (required, positive, must be multiple of startPrice × priceMultiplication)",
+  "bidAmount": "number (required, positive, must follow increment pattern)",
   "bidType": "string (optional, enum: 'initial' | 'outbid' | 'winning' | 'auto')"
 }
 ```
@@ -67,8 +79,8 @@ Places a new bid on an auction.
 
 - `auctionId`: Must be a non-empty string
 - `bidAmount`:
-  - Must be a positive number greater than 0
-  - **Must be an exact multiple of `startPrice × priceMultiplication`**
+  - Must be at least `startPrice`
+  - **Must follow the formula: `startPrice + (n × priceMultiplication)`** where n = 0, 1, 2, 3, ...
   - Must be higher than the current highest bid
 - `bidType`: Optional, must be one of: `initial`, `outbid`, `winning`, `auto`
 
@@ -119,7 +131,16 @@ Places a new bid on an auction.
 ```json
 {
   "success": false,
-  "message": "Bid amount must be a multiple of 30000 (startPrice: 30000 × multiplier: 1)"
+  "message": "Bid amount must follow increment of 100.000. Valid bids: 50.000, 150.000, 250.000, etc."
+}
+```
+
+- **400 Bad Request** (Bid Below Start Price):
+
+```json
+{
+  "success": false,
+  "message": "Bid amount must be at least 50.000 (start price)"
 }
 ```
 
@@ -128,7 +149,7 @@ Places a new bid on an auction.
 ```json
 {
   "success": false,
-  "message": "Bid must be higher than current highest bid of 90000"
+  "message": "Bid must be higher than current highest bid of 150000"
 }
 ```
 
@@ -178,7 +199,9 @@ Places a new bid on an auction.
 }
 ```
 
-**Example Request** (Valid - Multiple of 30000):
+**Example Request** (Valid bid - follows increment pattern):
+
+For auction with `startPrice = 50000` and `priceMultiplication = 100000`:
 
 ```bash
 curl -X POST https://api.example.com/api/auction-activity/bid \
@@ -186,24 +209,24 @@ curl -X POST https://api.example.com/api/auction-activity/bid \
   -H "Content-Type: application/json" \
   -d '{
     "auctionId": "507f1f77bcf86cd799439011",
-    "bidAmount": 60000,
+    "bidAmount": 150000,
     "bidType": "initial"
   }'
+# Valid: 150000 = 50000 + (1 × 100000)
 ```
 
-**Example Request** (Invalid - Not a Multiple):
+**Example Request** (Invalid bid - doesn't follow increment):
 
 ```bash
-# This will fail if startPrice × priceMultiplication = 30000
 curl -X POST https://api.example.com/api/auction-activity/bid \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
     "auctionId": "507f1f77bcf86cd799439011",
-    "bidAmount": 45000,
+    "bidAmount": 100000,
     "bidType": "initial"
   }'
-# Error: Bid amount must be a multiple of 30000
+# Error: Bid amount must follow increment of 100.000. Valid bids: 50.000, 150.000, 250.000, etc.
 ```
 
 ---

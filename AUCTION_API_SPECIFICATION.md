@@ -18,15 +18,21 @@ Authorization: Bearer <token>
 
 Starting from this version, auctions use a **priceMultiplication** system instead of a fixed end price. This feature ensures:
 
-- **Bidding increments** are based on the auction's `startPrice` multiplied by `priceMultiplication`
-- **Valid bid amounts** must be exact multiples of `startPrice × priceMultiplication`
+- **Bid increments** are defined by `priceMultiplication` (the increment amount in nominal value)
+- **Valid bid amounts** must follow the formula: `startPrice + (n × priceMultiplication)` where n = 0, 1, 2, 3, ...
 - **Consistent bidding** prevents irregular bid amounts
 
 ### Example:
 
-- If `startPrice = 30000` and `priceMultiplication = 1`
-- Valid bids: `30000`, `60000`, `90000`, `120000`, etc.
-- Invalid bids: `35000`, `45000`, `75000` (not multiples of 30000)
+- If `startPrice = 30000` and `priceMultiplication = 100000`
+- Valid bids: `30000`, `130000`, `230000`, `330000`, etc.
+- Invalid bids: `50000`, `100000`, `150000` (not following the increment pattern)
+
+### Another Example:
+
+- If `startPrice = 50000` and `priceMultiplication = 50000`
+- Valid bids: `50000`, `100000`, `150000`, `200000`, etc.
+- Invalid bids: `75000`, `125000`, `175000`
 
 ---
 
@@ -40,7 +46,7 @@ interface IAuction {
   itemName: string;
   note: string;
   startPrice: number;
-  priceMultiplication: number; // Default: 1
+  priceMultiplication: number; // Bid increment amount (default: same as startPrice)
   startDate: Date;
   endDate: Date;
   endTime: Date;
@@ -149,7 +155,7 @@ Creates a new auction with media files.
 - `itemName` (required): Auction item name (max 200 characters)
 - `note` (optional): Additional notes or description
 - `startPrice` (required): Starting price (must be > 0)
-- `priceMultiplication` (optional): Price multiplication factor (default: 1, must be ≥ 1)
+- `priceMultiplication` (optional): Bid increment amount in nominal value (default: same as startPrice, must be ≥ 1)
 - `startDate` (required): Auction start date (ISO 8601 format, must be in the future)
 - `endDate` (required): Auction end date (ISO 8601 format, must be after startDate)
 - `endTime` (optional): Specific end time (HH:MM:SS format)
@@ -161,7 +167,7 @@ Creates a new auction with media files.
 
 - `itemName`: Non-empty, max 200 characters
 - `startPrice`: Must be greater than 0
-- `priceMultiplication`: Must be 1 or greater
+- `priceMultiplication`: Must be 1 or greater (represents the bid increment amount)
 - `startDate`: Must be a future date
 - `endDate`: Must be after `startDate`
 - `media`: Max 10 files, each max 5MB, accepted formats: jpg, jpeg, png, gif, webp
@@ -177,7 +183,7 @@ Creates a new auction with media files.
     "itemName": "Premium Koi Fish - Kohaku",
     "note": "Beautiful premium koi with excellent pattern",
     "startPrice": 30000,
-    "priceMultiplication": 1,
+    "priceMultiplication": 100000,
     "startDate": "2024-12-01T00:00:00.000Z",
     "endDate": "2024-12-31T23:59:59.000Z",
     "endTime": "2024-12-31T23:59:59.000Z",
@@ -224,7 +230,7 @@ curl -X POST https://api.example.com/api/auction \
   -F "itemName=Premium Koi Fish - Kohaku" \
   -F "note=Beautiful premium koi" \
   -F "startPrice=30000" \
-  -F "priceMultiplication=1" \
+  -F "priceMultiplication=100000" \
   -F "startDate=2024-12-01T00:00:00.000Z" \
   -F "endDate=2024-12-31T23:59:59.000Z" \
   -F "endTime=23:59:59" \
@@ -416,37 +422,49 @@ curl -X DELETE https://api.example.com/api/auction/674a1234567890abcdef1234 \
 
 ## Price Multiplication Examples
 
-### Example 1: Standard Increment (multiplier = 1)
+### Example 1: Increment of 100,000
+
+```
+startPrice: 50000
+priceMultiplication: 100000
+
+Valid bids: 50000, 150000, 250000, 350000, 450000
+Formula: startPrice + (n × priceMultiplication)
+  - 50000 + (0 × 100000) = 50000
+  - 50000 + (1 × 100000) = 150000
+  - 50000 + (2 × 100000) = 250000
+
+Invalid bids: 75000, 100000, 200000 (not following the pattern)
+```
+
+### Example 2: Increment of 50,000
 
 ```
 startPrice: 30000
-priceMultiplication: 1
-minimum increment: 30000 × 1 = 30000
+priceMultiplication: 50000
 
-Valid bids: 30000, 60000, 90000, 120000, 150000
-Invalid bids: 25000, 35000, 45000, 55000
+Valid bids: 30000, 80000, 130000, 180000, 230000
+Formula: startPrice + (n × priceMultiplication)
+  - 30000 + (0 × 50000) = 30000
+  - 30000 + (1 × 50000) = 80000
+  - 30000 + (2 × 50000) = 130000
+
+Invalid bids: 50000, 100000, 150000
 ```
 
-### Example 2: Higher Multiplier (multiplier = 2)
+### Example 3: Same as Start Price
 
 ```
-startPrice: 30000
-priceMultiplication: 2
-minimum increment: 30000 × 2 = 60000
+startPrice: 25000
+priceMultiplication: 25000
 
-Valid bids: 60000, 120000, 180000, 240000
-Invalid bids: 30000, 90000, 150000, 210000
-```
+Valid bids: 25000, 50000, 75000, 100000, 125000
+Formula: startPrice + (n × priceMultiplication)
+  - 25000 + (0 × 25000) = 25000
+  - 25000 + (1 × 25000) = 50000
+  - 25000 + (2 × 25000) = 75000
 
-### Example 3: Lower Base Price (multiplier = 1)
-
-```
-startPrice: 10000
-priceMultiplication: 1
-minimum increment: 10000 × 1 = 10000
-
-Valid bids: 10000, 20000, 30000, 40000
-Invalid bids: 15000, 25000, 35000
+Invalid bids: 30000, 40000, 60000
 ```
 
 ---
@@ -467,7 +485,7 @@ Invalid bids: 15000, 25000, 35000
 
 ## Notes
 
-1. **Price Multiplication**: The `priceMultiplication` field determines the valid bid increment. All bids must be exact multiples of `startPrice × priceMultiplication`.
+1. **Price Multiplication**: The `priceMultiplication` field is the **nominal increment amount** for bids. Valid bids follow the formula: `startPrice + (n × priceMultiplication)` where n = 0, 1, 2, 3, ...
 
 2. **Media Files**: Maximum 10 files per auction, each file max 5MB. Supported formats: jpg, jpeg, png, gif, webp.
 
@@ -499,8 +517,8 @@ If you're migrating from the old `endPrice` system:
 ```json
 {
   "startPrice": 30000,
-  "priceMultiplication": 1
+  "priceMultiplication": 100000
 }
 ```
 
-The new system provides more flexibility and ensures consistent bidding increments based on the auction's base price.
+The new system provides more flexibility and ensures consistent bidding increments. The `priceMultiplication` is a nominal value representing how much each bid should increase.

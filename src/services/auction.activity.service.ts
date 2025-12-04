@@ -182,13 +182,25 @@ export class AuctionActivityService {
       if (!auction) throw new CustomErrorHandler(404, "Auction not found");
       if (auction.endTime < bidTime) throw new CustomErrorHandler(400, "Auction has ended");
 
-      // Validate bid amount is a multiple of startPrice
-      const priceMultiplication = auction.priceMultiplication || 1;
-      const minimumBidIncrement = auction.startPrice * priceMultiplication;
+      // Validate bid amount follows the price multiplication increment rule
+      // Bid must be: startPrice + (n × priceMultiplication) where n >= 0
+      const priceMultiplication = auction.priceMultiplication || auction.startPrice;
+      const bidDifference = bidAmount - auction.startPrice;
 
-      // Check if bid amount is a valid multiple of the base price multiplication
-      if (bidAmount % minimumBidIncrement !== 0) {
-        throw new CustomErrorHandler(400, `Bid amount must be a multiple of ${minimumBidIncrement.toLocaleString("id-ID")} (startPrice: ${auction.startPrice.toLocaleString("id-ID")} × multiplier: ${priceMultiplication})`);
+      // Bid must be at least startPrice
+      if (bidAmount < auction.startPrice) {
+        throw new CustomErrorHandler(400, `Bid amount must be at least ${auction.startPrice.toLocaleString("id-ID")} (start price)`);
+      }
+
+      // Check if bid difference is a valid multiple of priceMultiplication
+      if (bidDifference > 0 && bidDifference % priceMultiplication !== 0) {
+        throw new CustomErrorHandler(
+          400,
+          `Bid amount must follow increment of ${priceMultiplication.toLocaleString("id-ID")}. Valid bids: ${auction.startPrice.toLocaleString("id-ID")}, ${(auction.startPrice + priceMultiplication).toLocaleString("id-ID")}, ${(
+            auction.startPrice +
+            priceMultiplication * 2
+          ).toLocaleString("id-ID")}, etc.`
+        );
       }
 
       // Get current highest bid

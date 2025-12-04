@@ -97,7 +97,7 @@ GET /api/auction-activity/my-auctions
 - `itemName`: Name of the item being auctioned
 - `note`: Additional notes about the auction
 - `startPrice`: Starting price for the auction
-- `priceMultiplication`: Price multiplier to calculate valid bid increments (default: 1)
+- `priceMultiplication`: Bid increment amount (nominal value)
 - `startDate`: When the auction starts
 - `endDate`: When the auction ends
 - `endTime`: Exact time when auction ends
@@ -107,7 +107,7 @@ GET /api/auction-activity/my-auctions
 - `createdAt`: When the auction was created
 - `updatedAt`: When the auction was last updated
 
-**Note**: Valid bid amounts must be exact multiples of `startPrice × priceMultiplication`.
+**Note**: Valid bid amounts must follow the formula: `startPrice + (n × priceMultiplication)` where n = 0, 1, 2, 3, ...
 
 ### User Bid Info
 
