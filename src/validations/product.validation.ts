@@ -26,6 +26,15 @@ export const createProductSchema = z.object({
     .min(1, "Product category is required")
     .regex(/^[0-9a-fA-F]{24}$/, "Product category must be a valid ObjectId"),
 
+  stock: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      const num = typeof val === "string" ? parseInt(val, 10) : val;
+      if (isNaN(num)) throw new Error("Invalid stock value");
+      return num;
+    })
+    .refine((val) => val >= 0, "Stock cannot be negative"),
+
   isActive: z
     .union([z.string(), z.boolean()])
     .transform((val) => {
@@ -65,6 +74,16 @@ export const updateProductSchema = z
     productCategory: z
       .string()
       .regex(/^[0-9a-fA-F]{24}$/, "Product category must be a valid ObjectId")
+      .optional(),
+
+    stock: z
+      .union([z.string(), z.number()])
+      .transform((val) => {
+        const num = typeof val === "string" ? parseInt(val, 10) : val;
+        if (isNaN(num)) throw new Error("Invalid stock value");
+        return num;
+      })
+      .refine((val) => val >= 0, "Stock cannot be negative")
       .optional(),
 
     isActive: z

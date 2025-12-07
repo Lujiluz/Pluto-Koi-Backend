@@ -11,6 +11,7 @@ export interface CreateProductServiceData {
   productPrice: number;
   productType: ProductType;
   productCategory: string;
+  stock: number;
   isActive?: boolean;
   media?: UploadedFile[];
 }
@@ -20,6 +21,7 @@ export interface UpdateProductServiceData {
   productPrice?: number;
   productType?: ProductType;
   productCategory?: string;
+  stock?: number;
   isActive?: boolean;
   media?: UploadedFile[];
   keepExistingMedia?: boolean;
@@ -34,8 +36,8 @@ export class ProductService {
       const { media, ...productFields } = productData;
 
       // Validate required fields
-      if (!productFields.productName || !productFields.productPrice || !productFields.productType || !productFields.productCategory) {
-        throw new CustomErrorHandler(400, "Missing required fields: productName, productPrice, productType, productCategory");
+      if (!productFields.productName || !productFields.productPrice || !productFields.productType || !productFields.productCategory || productFields.stock === undefined) {
+        throw new CustomErrorHandler(400, "Missing required fields: productName, productPrice, productType, productCategory, stock");
       }
 
       // Check if product name already exists
@@ -58,6 +60,11 @@ export class ProductService {
       // Validate price
       if (productFields.productPrice <= 0) {
         throw new CustomErrorHandler(400, "Product price must be greater than 0");
+      }
+
+      // Validate stock
+      if (productFields.stock < 0) {
+        throw new CustomErrorHandler(400, "Stock cannot be negative");
       }
 
       // Validate and process media files if provided
@@ -84,6 +91,7 @@ export class ProductService {
         productPrice: Number(productFields.productPrice),
         productType: productFields.productType,
         productCategory: productFields.productCategory,
+        stock: Number(productFields.stock),
         isActive: productFields.isActive !== undefined ? productFields.isActive : true,
         media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
       };
@@ -206,6 +214,11 @@ export class ProductService {
       // Validate price if being updated
       if (productFields.productPrice !== undefined && productFields.productPrice <= 0) {
         throw new CustomErrorHandler(400, "Product price must be greater than 0");
+      }
+
+      // Validate stock if being updated
+      if (productFields.stock !== undefined && productFields.stock < 0) {
+        throw new CustomErrorHandler(400, "Stock cannot be negative");
       }
 
       // Handle media update

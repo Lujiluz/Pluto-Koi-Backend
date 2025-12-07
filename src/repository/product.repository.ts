@@ -9,6 +9,7 @@ export interface CreateProductData {
   productPrice: number;
   productType: ProductType;
   productCategory: string;
+  stock: number;
   isActive?: boolean;
   media?: { fileUrl: string }[];
 }
@@ -18,6 +19,7 @@ export interface UpdateProductData {
   productPrice?: number;
   productType?: ProductType;
   productCategory?: string;
+  stock?: number;
   isActive?: boolean;
   media?: { fileUrl: string }[];
 }

@@ -10,6 +10,7 @@ export interface IProduct extends Document {
   productPrice: number;
   productType: ProductType;
   productCategory: Types.ObjectId;
+  stock: number;
   isActive: boolean;
   media: IProductMedia[];
   createdAt: Date;
@@ -30,6 +31,7 @@ const productSchema = new Schema<IProduct>(
       ref: "Category",
       required: true,
     },
+    stock: { type: Number, required: true, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
     media: [
       {

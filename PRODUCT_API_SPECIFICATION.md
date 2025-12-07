@@ -31,6 +31,7 @@ interface IProduct {
     name: string;
     description?: string;
   };
+  stock: number;
   isActive: boolean;
   media: Array<{
     fileUrl: string;
@@ -85,6 +86,7 @@ GET /api/product?page=1&limit=10&category=672abc123def456789012345&type=Produk&i
           "name": "Pakan Ikan",
           "description": "Fish food and nutrition products"
         },
+        "stock": 100,
         "isActive": true,
         "media": [
           {
@@ -153,6 +155,7 @@ GET /api/product/featured?limit=5
         "_id": "672abc123def456789012345",
         "name": "Pakan Ikan"
       },
+      "stock": 100,
       "isActive": true,
       "media": [],
       "createdAt": "2024-11-08T10:30:00.000Z",
@@ -226,6 +229,7 @@ Creates a new product with optional media upload.
 | `productPrice`    | number  | Yes      | Product price (> 0)                   |
 | `productType`     | string  | Yes      | Product type: "Produk" or "Koi Store" |
 | `productCategory` | string  | Yes      | Category ObjectId                     |
+| `stock`           | number  | Yes      | Product stock quantity (≥ 0)          |
 | `isActive`        | boolean | No       | Product status (default: true)        |
 | `media`           | file[]  | No       | Product images/media files            |
 
@@ -239,6 +243,7 @@ productName=Premium Koi Food
 productPrice=45.99
 productType=Produk
 productCategory=672abc123def456789012345
+stock=100
 isActive=true
 media=@koi-food-1.jpg
 media=@koi-food-2.jpg
@@ -256,6 +261,7 @@ media=@koi-food-2.jpg
     "productPrice": 45.99,
     "productType": "Produk",
     "productCategory": "672abc123def456789012345",
+    "stock": 100,
     "isActive": true,
     "media": [
       {
@@ -307,6 +313,7 @@ GET /api/product/672def123abc456789012345
       "name": "Pakan Ikan",
       "description": "Fish food and nutrition products"
     },
+    "stock": 100,
     "isActive": true,
     "media": [
       {
@@ -343,6 +350,7 @@ Updates an existing product by ID with optional media upload.
 | `productPrice`      | number  | No       | Product price (> 0)                       |
 | `productType`       | string  | No       | Product type: "Produk" or "Koi Store"     |
 | `productCategory`   | string  | No       | Category ObjectId                         |
+| `stock`             | number  | No       | Product stock quantity (≥ 0)              |
 | `isActive`          | boolean | No       | Product status                            |
 | `keepExistingMedia` | boolean | No       | Keep existing media when adding new files |
 | `media`             | file[]  | No       | New product images/media files            |
@@ -371,6 +379,7 @@ media=@new-image.jpg
     "productPrice": 49.99,
     "productType": "Produk",
     "productCategory": "672abc123def456789012345",
+    "stock": 100,
     "isActive": true,
     "media": [
       {
@@ -418,6 +427,7 @@ PATCH /api/product/672def123abc456789012345/status
     "productPrice": 45.99,
     "productType": "Produk",
     "productCategory": "672abc123def456789012345",
+    "stock": 100,
     "isActive": false,
     "media": [],
     "createdAt": "2024-11-08T10:30:00.000Z",
@@ -589,6 +599,7 @@ curl -X POST \
   -F "productPrice=75.50" \
   -F "productType=Produk" \
   -F "productCategory=672abc123def456789012345" \
+  -F "stock=50" \
   -F "isActive=true" \
   -F "media=@product-image-1.jpg" \
   -F "media=@product-image-2.jpg"
@@ -606,7 +617,14 @@ curl -X GET \
 
 ## Changelog
 
-### Version 1.1.0 (Current)
+### Version 1.2.0 (Current)
+
+- Added `stock` field as mandatory field for product creation
+- Stock validation: must be >= 0
+- Stock field is optional for update operations
+- Updated all response examples to include stock field
+
+### Version 1.1.0
 
 - Added `productType` and `productCategory` as mandatory fields
 - Added filtering by category and type

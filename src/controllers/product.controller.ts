@@ -11,13 +11,13 @@ export class ProductController {
   async createProduct(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       // Extract form data
-      const { productName, productPrice, productType, productCategory, isActive } = req.body;
+      const { productName, productPrice, productType, productCategory, stock, isActive } = req.body;
 
       // Validate required fields
-      if (!productName || !productPrice || !productType || !productCategory) {
+      if (!productName || !productPrice || !productType || !productCategory || stock === undefined) {
         res.status(400).json({
           success: false,
-          message: "Missing required fields: productName, productPrice, productType, productCategory",
+          message: "Missing required fields: productName, productPrice, productType, productCategory, stock",
         });
         return;
       }
@@ -58,6 +58,7 @@ export class ProductController {
         productPrice: parseFloat(productPrice),
         productType: productType as ProductType,
         productCategory: productCategory.trim(),
+        stock: parseInt(stock),
         isActive: isActive !== undefined ? isActive === "true" || isActive === true : true,
         media: mediaFiles.length > 0 ? mediaFiles : undefined,
       };
@@ -125,7 +126,7 @@ export class ProductController {
   async updateProduct(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const { productName, productPrice, productType, productCategory, isActive, keepExistingMedia } = req.body;
+      const { productName, productPrice, productType, productCategory, stock, isActive, keepExistingMedia } = req.body;
 
       if (!id) {
         res.status(400).json({
@@ -180,6 +181,10 @@ export class ProductController {
 
       if (productCategory !== undefined) {
         updateData.productCategory = productCategory.trim();
+      }
+
+      if (stock !== undefined) {
+        updateData.stock = parseInt(stock);
       }
 
       if (isActive !== undefined) {
