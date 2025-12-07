@@ -65,16 +65,19 @@ class EventService {
    */
   async createEvent(eventData: CreateEventData): Promise<GeneralResponse<IEvent>> {
     try {
-      // Upsert the event (update if exists, create if doesn't)
+      // Calculate totalBidAmount first if event will be active
+      let calculatedTotalBidAmount = 0;
+      if (eventData.isActive) {
+        calculatedTotalBidAmount = await this.calculateTotalBidAmount();
+      }
+
+      console.log('CALCULATED BID AMOUNT: ', calculatedTotalBidAmount)
+
+      // Upsert the event with calculated totalBidAmount
       const event = await eventRepository.upsertEvent({
         isActive: eventData.isActive,
-        totalBidAmount: eventData.totalBidAmount || 0,
+        totalBidAmount: calculatedTotalBidAmount,
       });
-
-      // If the event is active, calculate the total bid amount
-      if (event.isActive) {
-        await this.recalculateTotalBidAmount();
-      }
 
       return {
         status: "success",
@@ -112,15 +115,27 @@ class EventService {
         throw new CustomErrorHandler(500, "Failed to update event");
       }
 
-      // If the event is now active, recalculate the total bid amount
+      // Recalculate total bid amount based on event status
+      // If active: calculate sum of all highest bids on active auctions
+      // If inactive: reset to 0
+      let finalEvent = updatedEvent;
       if (updatedEvent.isActive) {
-        await this.recalculateTotalBidAmount();
+        const recalculateResult = await this.recalculateTotalBidAmount();
+        if (recalculateResult.data) {
+          finalEvent = recalculateResult.data;
+        }
+      } else {
+        // Reset totalBidAmount to 0 when event is deactivated
+        const resetEvent = await eventRepository.updateTotalBidAmount(0);
+        if (resetEvent) {
+          finalEvent = resetEvent;
+        }
       }
 
       return {
         status: "success",
         message: "Event updated successfully",
-        data: updatedEvent,
+        data: finalEvent,
       };
     } catch (error) {
       console.error("Error updating event:", error);
@@ -245,6 +260,31 @@ class EventService {
       console.error("Error getting event details:", error);
       return null;
     }
+  }
+
+  /**
+   * Calculate total bid amount from all active auctions
+   * This is a helper method that returns just the calculated number
+   */
+  private async calculateTotalBidAmount(): Promise<number> {
+    // Get all active auctions (auctions that are currently running)
+    const now = new Date();
+    const activeAuctions = await AuctionModel.find({
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    }).exec();
+
+    // Calculate total bid amount from all active auctions
+    let totalBidAmount = 0;
+
+    for (const auction of activeAuctions) {
+      const highestBid = await AuctionActivityModel.getHighestBidForAuction(auction._id as Types.ObjectId);
+      if (highestBid) {
+        totalBidAmount += highestBid.bidAmount;
+      }
+    }
+
+    return totalBidAmount;
   }
 }
 

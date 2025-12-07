@@ -7,6 +7,7 @@ import { websocketService } from "./websocket.service.js";
 import { LeaderboardUpdatePayload, TimeExtensionPayload, NewBidPayload, LeaderboardParticipant } from "../interfaces/websocket.interface.js";
 import { logger } from "../utils/logger.js";
 import { userRepository } from "../repository/user.repository.js";
+import { eventRepository } from "../repository/event.repository.js";
 
 export interface BidData {
   auctionId: string;
@@ -263,6 +264,9 @@ export class AuctionActivityService {
           websocketService.emitTimeExtension(auctionId, timeExtensionPayload);
         }
       }
+
+      // Recalculate totalBidAmount for the active event after new bid
+      await this.recalculateEventTotalBidAmount();
 
       return {
         status: "success",
@@ -593,6 +597,43 @@ export class AuctionActivityService {
     } catch (error) {
       console.error("Error getting user bid auctions:", error);
       throw new CustomErrorHandler(500, "Failed to get user bid auctions");
+    }
+  }
+
+  /**
+   * Recalculate totalBidAmount for the active event
+   * This is called after a new bid is placed to update the event's total
+   */
+  private async recalculateEventTotalBidAmount(): Promise<void> {
+    try {
+      const activeEvent = await eventRepository.getActiveEvent();
+
+      if (!activeEvent) {
+        return; // No active event, nothing to update
+      }
+
+      // Get all active auctions (auctions that are currently running)
+      const now = new Date();
+      const activeAuctions = await AuctionModel.find({
+        startDate: { $lte: now },
+        endDate: { $gte: now },
+      }).exec();
+
+      // Calculate total bid amount from all active auctions
+      let totalBidAmount = 0;
+
+      for (const auction of activeAuctions) {
+        const highestBid = await AuctionActivityModel.getHighestBidForAuction(auction._id as Types.ObjectId);
+        if (highestBid) {
+          totalBidAmount += highestBid.bidAmount;
+        }
+      }
+
+      // Update the event with the calculated total
+      await eventRepository.updateTotalBidAmount(totalBidAmount);
+    } catch (error) {
+      // Log error but don't throw - bid placement should still succeed
+      console.error("Error recalculating event total bid amount:", error);
     }
   }
 }

@@ -218,13 +218,13 @@ class EventRepository {
     if (existingEvent) {
       // Update the existing event
       existingEvent.isActive = eventData.isActive ?? existingEvent.isActive;
-      existingEvent.totalBidAmount = totalBid;
+      existingEvent.totalBidAmount = eventData.totalBidAmount ?? totalBid;
       return await existingEvent.save();
     } else {
       // Create new event if none exists
       const newEvent = new EventModel({
         isActive: eventData.isActive ?? false,
-        totalBidAmount: totalBid,
+        totalBidAmount: eventData.totalBidAmount ?? totalBid,
       });
       return await newEvent.save();
     }
