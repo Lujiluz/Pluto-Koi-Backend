@@ -492,14 +492,39 @@ export class AuctionActivityService {
       const skip = (page - 1) * limit;
       const userObjectId = new Types.ObjectId(userId);
 
+      // Constants for history deadline (2 x 24 hours = 48 hours)
+      const HISTORY_DEADLINE_HOURS = 48;
+      const deadlineMs = HISTORY_DEADLINE_HOURS * 60 * 60 * 1000;
+      const now = new Date();
+      const deadlineDate = new Date(now.getTime() - deadlineMs);
+
       // Get distinct auction IDs where user has placed bids
       const distinctAuctionIds = await AuctionActivityModel.distinct("auctionId", { userId: userObjectId });
 
-      // Get total count for pagination
-      const total = distinctAuctionIds.length;
+      // Filter auction IDs based on the 48-hour deadline rule
+      // We need to check each auction's endTime to filter out expired ones
+      const validAuctionIds: Types.ObjectId[] = [];
+
+      for (const auctionId of distinctAuctionIds) {
+        const auction = await AuctionModel.findById(auctionId).select("endTime").lean();
+        if (!auction) continue;
+
+        const auctionEndTime = new Date(auction.endTime);
+        const isEnded = now > auctionEndTime;
+
+        // Keep auction if:
+        // 1. It's still active (not ended yet), OR
+        // 2. It ended within the last 48 hours
+        if (!isEnded || auctionEndTime >= deadlineDate) {
+          validAuctionIds.push(auctionId);
+        }
+      }
+
+      // Get total count for pagination (after filtering)
+      const total = validAuctionIds.length;
 
       // Get paginated auction IDs
-      const paginatedAuctionIds = distinctAuctionIds.slice(skip, skip + limit);
+      const paginatedAuctionIds = validAuctionIds.slice(skip, skip + limit);
 
       // Get auction details and user's bid information for each auction
       const auctionDetails = await Promise.all(
@@ -550,12 +575,12 @@ export class AuctionActivityService {
               isCurrentWinner,
             },
             currentHighestBid: currentHighestBid?.bidAmount || 0,
-            auctionStatus: new Date() > new Date(auction.endTime) ? "ended" : "active",
+            auctionStatus: now > new Date(auction.endTime) ? "ended" : "active",
           };
         })
       );
 
-      // Filter out any null values (in case some auctions were deleted)
+      // Filter out any null values (in case some auctions were deleted during processing)
       const validAuctions = auctionDetails.filter((auction) => auction !== null);
 
       // if there's no auctions, return empty array
