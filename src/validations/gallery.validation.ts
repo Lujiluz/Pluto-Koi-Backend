@@ -1,17 +1,58 @@
 import { z } from "zod";
 
+// Gallery type enum
+export const galleryTypeEnum = z.enum(["exclusive", "regular"]);
+
 // Base gallery schema for validation
-export const gallerySchema = z.object({
-  galleryName: z.string().min(2, "Gallery name must be at least 2 characters").max(100, "Gallery name must not exceed 100 characters").trim(),
+export const gallerySchema = z
+  .object({
+    galleryName: z.string().min(2, "Gallery name must be at least 2 characters").max(100, "Gallery name must not exceed 100 characters").trim(),
 
-  owner: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must not exceed 50 characters").trim(),
+    galleryType: galleryTypeEnum.default("regular"),
 
-  handling: z.string().min(2, "Handling must be at least 2 characters").max(100, "Handling must not exceed 100 characters").trim(),
+    owner: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must not exceed 50 characters").trim(),
 
-  folderName: z.string().min(2, "Folder name must be at least 2 characters").max(50, "Folder name must not exceed 50 characters").trim().default("General").optional(),
+    // For exclusive product type
+    fishCode: z.string().min(2, "Fish code must be at least 2 characters").max(50, "Fish code must not exceed 50 characters").trim().optional(),
 
-  isActive: z.boolean().optional(),
-});
+    fishType: z.string().min(2, "Fish type must be at least 2 characters").max(100, "Fish type must not exceed 100 characters").trim().optional(),
+
+    // For regular type
+    handling: z.string().min(2, "Handling must be at least 2 characters").max(100, "Handling must not exceed 100 characters").trim().optional(),
+
+    folderName: z.string().min(2, "Folder name must be at least 2 characters").max(50, "Folder name must not exceed 50 characters").trim().default("General").optional(),
+
+    isActive: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Conditional validation based on galleryType
+    if (data.galleryType === "exclusive") {
+      // Exclusive product requires fishCode and fishType
+      if (!data.fishCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Fish code is required for exclusive product galleries",
+          path: ["fishCode"],
+        });
+      }
+      if (!data.fishType) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Fish type is required for exclusive product galleries",
+          path: ["fishType"],
+        });
+      }
+    } else if (data.galleryType === "regular") {
+      // Regular type requires handling
+      if (!data.handling) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Handling is required for regular galleries",
+          path: ["handling"],
+        });
+      }
+    }
+  });
 
 // Create gallery validation schema
 export const createGallerySchema = gallerySchema;
@@ -20,9 +61,17 @@ export const createGallerySchema = gallerySchema;
 export const updateGallerySchema = z.object({
   galleryName: z.string().min(2, "Gallery name must be at least 2 characters").max(100, "Gallery name must not exceed 100 characters").trim().optional(),
 
+  galleryType: galleryTypeEnum.optional(),
+
   owner: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must not exceed 50 characters").trim().optional(),
 
-  handling: z.string().min(2, "Handling must be at least 2 characters").max(100, "Handling must not exceed 100 characters").trim().optional(),
+  // For exclusive product type
+  fishCode: z.string().min(2, "Fish code must be at least 2 characters").max(50, "Fish code must not exceed 50 characters").trim().optional().nullable(),
+
+  fishType: z.string().min(2, "Fish type must be at least 2 characters").max(100, "Fish type must not exceed 100 characters").trim().optional().nullable(),
+
+  // For regular type
+  handling: z.string().min(2, "Handling must be at least 2 characters").max(100, "Handling must not exceed 100 characters").trim().optional().nullable(),
 
   folderName: z.string().min(2, "Folder name must be at least 2 characters").max(50, "Folder name must not exceed 50 characters").trim().optional(),
 
@@ -57,6 +106,8 @@ export const getGalleriesQuerySchema = z.object({
   owner: z.string().max(50, "Owner name must not exceed 50 characters").trim().optional(),
 
   folderName: z.string().max(50, "Folder name must not exceed 50 characters").trim().optional(),
+
+  galleryType: z.enum(["exclusive", "regular"]).optional(),
 });
 
 // Search galleries validation schema
@@ -94,6 +145,7 @@ export const validateGalleryId = galleryIdSchema;
 export const validateFeaturedGalleriesQuery = featuredGalleriesQuerySchema;
 
 // Type exports for TypeScript
+export type GalleryType = z.infer<typeof galleryTypeEnum>;
 export type CreateGalleryInput = z.infer<typeof createGallerySchema>;
 export type UpdateGalleryInput = z.infer<typeof updateGallerySchema>;
 export type GetGalleriesQuery = z.infer<typeof getGalleriesQuerySchema>;

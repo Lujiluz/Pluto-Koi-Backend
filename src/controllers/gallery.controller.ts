@@ -39,9 +39,9 @@ export class GalleryController {
       // Validate query parameters
       const validatedQuery = validateGetGalleriesQuery.parse(req.query);
 
-      const { page = 1, limit = 10, isActive, search, owner, folderName } = validatedQuery;
+      const { page = 1, limit = 10, isActive, search, owner, folderName, galleryType } = validatedQuery;
 
-      const result = await galleryService.getAllGalleries(page, limit, isActive, search, owner, folderName);
+      const result = await galleryService.getAllGalleries(page, limit, isActive, search, owner, folderName, galleryType);
 
       res.status(200).json(result);
     } catch (error) {

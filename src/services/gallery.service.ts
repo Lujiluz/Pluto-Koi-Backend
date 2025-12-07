@@ -1,13 +1,18 @@
 import { GeneralResponse } from "../interfaces/global.interface.js";
 import { CustomErrorHandler } from "../middleware/errorHandler.js";
-import { IGallery } from "../models/gallery.model.js";
+import { IGallery, GalleryType } from "../models/gallery.model.js";
 import { galleryRepository, CreateGalleryData, UpdateGalleryData } from "../repository/gallery.repository.js";
 import { processUploadedFiles, validateFiles, deleteFile } from "../utils/fileUpload.js";
 
 export interface CreateGalleryServiceData {
   galleryName: string;
+  galleryType: GalleryType;
   owner: string;
-  handling: string;
+  // For exclusive product type
+  fishCode?: string;
+  fishType?: string;
+  // For regular type
+  handling?: string;
   folderName?: string;
   isActive?: boolean;
   media?: Express.Multer.File[];
@@ -15,8 +20,13 @@ export interface CreateGalleryServiceData {
 
 export interface UpdateGalleryServiceData {
   galleryName?: string;
+  galleryType?: GalleryType;
   owner?: string;
-  handling?: string;
+  // For exclusive product type
+  fishCode?: string | null;
+  fishType?: string | null;
+  // For regular type
+  handling?: string | null;
   folderName?: string;
   isActive?: boolean;
   media?: Express.Multer.File[];
@@ -26,14 +36,30 @@ export interface UpdateGalleryServiceData {
 export class GalleryService {
   /**
    * Create a new gallery with media upload support
+   * Supports two gallery types:
+   * - exclusive: requires owner, fishCode, fishType
+   * - regular: requires owner, handling
    */
   async createGallery(galleryData: CreateGalleryServiceData): Promise<GeneralResponse<IGallery>> {
     try {
       const { media, ...galleryFields } = galleryData;
 
-      // Validate required fields
-      if (!galleryFields.galleryName || !galleryFields.owner || !galleryFields.handling) {
-        throw new CustomErrorHandler(400, "Missing required fields: galleryName, owner, handling");
+      // Validate required fields based on gallery type
+      if (!galleryFields.galleryName || !galleryFields.owner) {
+        throw new CustomErrorHandler(400, "Missing required fields: galleryName, owner");
+      }
+
+      const galleryType = galleryFields.galleryType || "regular";
+
+      // Validate type-specific required fields
+      if (galleryType === "exclusive") {
+        if (!galleryFields.fishCode || !galleryFields.fishType) {
+          throw new CustomErrorHandler(400, "Missing required fields for exclusive gallery: fishCode, fishType");
+        }
+      } else if (galleryType === "regular") {
+        if (!galleryFields.handling) {
+          throw new CustomErrorHandler(400, "Missing required field for regular gallery: handling");
+        }
       }
 
       // Check if gallery name already exists
@@ -60,15 +86,23 @@ export class GalleryService {
         }
       }
 
-      // Prepare gallery data for database
+      // Prepare gallery data for database based on type
       const galleryToCreate: CreateGalleryData = {
         galleryName: galleryFields.galleryName.trim(),
+        galleryType: galleryType,
         owner: galleryFields.owner.trim(),
-        handling: galleryFields.handling.trim(),
         folderName: galleryFields.folderName?.trim() || "General",
         isActive: galleryFields.isActive !== undefined ? galleryFields.isActive : true,
         media: processedMedia.map((file) => ({ fileUrl: file.fileUrl })),
       };
+
+      // Add type-specific fields
+      if (galleryType === "exclusive") {
+        galleryToCreate.fishCode = galleryFields.fishCode?.trim();
+        galleryToCreate.fishType = galleryFields.fishType?.trim();
+      } else {
+        galleryToCreate.handling = galleryFields.handling?.trim();
+      }
 
       // Create gallery in database
       const createdGallery = await galleryRepository.create(galleryToCreate);
@@ -92,9 +126,17 @@ export class GalleryService {
   /**
    * Get all galleries with pagination and filtering
    */
-  async getAllGalleries(page: number = 1, limit: number = 10, isActive?: boolean, search?: string, owner?: string, folderName?: string): Promise<GeneralResponse<{ galleries: IGallery[]; metadata: any; statistics: any }>> {
+  async getAllGalleries(
+    page: number = 1,
+    limit: number = 10,
+    isActive?: boolean,
+    search?: string,
+    owner?: string,
+    folderName?: string,
+    galleryType?: GalleryType
+  ): Promise<GeneralResponse<{ galleries: IGallery[]; metadata: any; statistics: any }>> {
     try {
-      const filters: { isActive?: boolean; search?: string; owner?: string; folderName?: string } = {};
+      const filters: { isActive?: boolean; search?: string; owner?: string; folderName?: string; galleryType?: GalleryType } = {};
 
       if (isActive !== undefined) {
         filters.isActive = isActive;
@@ -110,6 +152,10 @@ export class GalleryService {
 
       if (folderName) {
         filters.folderName = folderName.trim();
+      }
+
+      if (galleryType) {
+        filters.galleryType = galleryType;
       }
 
       const { galleries, metadata } = await galleryRepository.findAll(page, limit, filters);

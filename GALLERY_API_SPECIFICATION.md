@@ -2,7 +2,14 @@
 
 ## Overview
 
-The Gallery API provides endpoints for managing image galleries. Each gallery belongs to a folder (default: "General") and can contain multiple media files. Galleries can be organized, filtered, and managed through various endpoints.
+The Gallery API provides endpoints for managing image galleries. Galleries are divided into **two types** with different form fields:
+
+1. **Exclusive Product Gallery** (`exclusive`): For exclusive/premium fish products
+   - Required fields: `owner`, `fishCode` (kode ikan), `fishType` (jenis ikan)
+2. **Regular Gallery** (`regular`): For general gallery content
+   - Required fields: `owner`, `handling` (penangan)
+
+Each gallery belongs to a folder (default: "General") and can contain multiple media files. Galleries can be organized, filtered, and managed through various endpoints.
 
 ## Base URL
 
@@ -17,6 +24,31 @@ All endpoints require authentication. Include the JWT token in the Authorization
 ```
 Authorization: Bearer <your-jwt-token>
 ```
+
+## Gallery Types
+
+### 1. Exclusive Product Gallery (`exclusive`)
+
+Used for exclusive/premium fish products. Form fields:
+
+- `galleryName` - Name of the gallery
+- `galleryType` - Must be `"exclusive"`
+- `owner` - Owner/breeder of the fish
+- `fishCode` - Unique fish identification code (kode ikan)
+- `fishType` - Type/species of fish (jenis ikan)
+- `folderName` - Optional folder name
+- `media` - Photos/media files
+
+### 2. Regular Gallery (`regular`)
+
+Used for general gallery content. Form fields:
+
+- `galleryName` - Name of the gallery
+- `galleryType` - Must be `"regular"` (default)
+- `owner` - Owner of the gallery
+- `handling` - Handler/team responsible (penangan)
+- `folderName` - Optional folder name
+- `media` - Photos/media files
 
 ## Response Format
 
@@ -36,28 +68,91 @@ All responses follow a consistent structure:
 
 ### 1. Create Gallery
 
-Creates a new gallery with optional media files.
+Creates a new gallery with optional media files. Form fields differ based on gallery type.
 
 **Endpoint:** `POST /api/gallery`
 
 **Content-Type:** `multipart/form-data`
 
+#### For Exclusive Product Gallery:
+
 **Form Fields:**
 
 - `galleryName` (required, 2-100 chars) - Name of the gallery
-- `owner` (required, 2-50 chars) - Owner of the gallery
-- `handling` (required, 2-100 chars) - Handling information
+- `galleryType` (required) - Must be `"exclusive"`
+- `owner` (required, 2-50 chars) - Owner/breeder of the fish
+- `fishCode` (required for exclusive, 2-50 chars) - Fish identification code
+- `fishType` (required for exclusive, 2-100 chars) - Type/species of fish
 - `folderName` (optional, 2-50 chars, default: "General") - Folder name
 - `isActive` (optional, default: true) - Active status
 - `media` (optional) - Array of media files (max 20 files)
 
-**Example Request:**
+**Example Request (Exclusive):**
+
+```bash
+POST /api/gallery
+Content-Type: multipart/form-data
+
+galleryName=Premium Kohaku Collection
+galleryType=exclusive
+owner=Sakai Fish Farm
+fishCode=KOH-2024-001
+fishType=Kohaku
+folderName=Premium
+isActive=true
+media=@fish1.jpg
+media=@fish2.png
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "status": "success",
+  "message": "Gallery created successfully",
+  "data": {
+    "_id": "674d1234567890abcdef1234",
+    "galleryName": "Premium Kohaku Collection",
+    "galleryType": "exclusive",
+    "owner": "Sakai Fish Farm",
+    "fishCode": "KOH-2024-001",
+    "fishType": "Kohaku",
+    "folderName": "Premium",
+    "isActive": true,
+    "media": [
+      {
+        "fileUrl": "http://localhost:3000/media/gallery/fish1.jpg"
+      },
+      {
+        "fileUrl": "http://localhost:3000/media/gallery/fish2.png"
+      }
+    ],
+    "createdAt": "2025-11-15T10:30:00.000Z",
+    "updatedAt": "2025-11-15T10:30:00.000Z"
+  }
+}
+```
+
+#### For Regular Gallery:
+
+**Form Fields:**
+
+- `galleryName` (required, 2-100 chars) - Name of the gallery
+- `galleryType` (optional, default: "regular") - Must be `"regular"`
+- `owner` (required, 2-50 chars) - Owner of the gallery
+- `handling` (required for regular, 2-100 chars) - Handler/team information
+- `folderName` (optional, 2-50 chars, default: "General") - Folder name
+- `isActive` (optional, default: true) - Active status
+- `media` (optional) - Array of media files (max 20 files)
+
+**Example Request (Regular):**
 
 ```bash
 POST /api/gallery
 Content-Type: multipart/form-data
 
 galleryName=Product Showcase
+galleryType=regular
 owner=John Doe
 handling=Marketing Team
 folderName=Products
@@ -73,8 +168,9 @@ media=@image2.png
   "status": "success",
   "message": "Gallery created successfully",
   "data": {
-    "_id": "674d1234567890abcdef1234",
+    "_id": "674d1234567890abcdef5678",
     "galleryName": "Product Showcase",
+    "galleryType": "regular",
     "owner": "John Doe",
     "handling": "Marketing Team",
     "folderName": "Products",
@@ -95,7 +191,7 @@ media=@image2.png
 
 **Error Responses:**
 
-- `400 Bad Request` - Validation errors, file validation errors
+- `400 Bad Request` - Validation errors, file validation errors, missing required fields for gallery type
 - `409 Conflict` - Gallery name already exists
 
 ---
@@ -111,14 +207,15 @@ Retrieves galleries with pagination, filtering, and statistics.
 - `page` (optional, default: 1) - Page number
 - `limit` (optional, default: 10, max: 100) - Items per page
 - `isActive` (optional) - Filter by active status (true/false)
-- `search` (optional, max 100 chars) - Text search in gallery name, owner, handling, folderName
+- `search` (optional, max 100 chars) - Text search in gallery name, owner, handling, fishCode, fishType, folderName
 - `owner` (optional, max 50 chars) - Filter by owner name (partial match)
 - `folderName` (optional, max 50 chars) - Filter by folder name
+- `galleryType` (optional) - Filter by gallery type (`exclusive` or `regular`)
 
 **Example Request:**
 
 ```
-GET /api/gallery?page=1&limit=10&folderName=Products&isActive=true&search=showcase
+GET /api/gallery?page=1&limit=10&galleryType=exclusive&isActive=true
 ```
 
 **Response (200 OK):**
@@ -131,14 +228,16 @@ GET /api/gallery?page=1&limit=10&folderName=Products&isActive=true&search=showca
     "galleries": [
       {
         "_id": "674d1234567890abcdef1234",
-        "galleryName": "Product Showcase",
-        "owner": "John Doe",
-        "handling": "Marketing Team",
-        "folderName": "Products",
+        "galleryName": "Premium Kohaku Collection",
+        "galleryType": "exclusive",
+        "owner": "Sakai Fish Farm",
+        "fishCode": "KOH-2024-001",
+        "fishType": "Kohaku",
+        "folderName": "Premium",
         "isActive": true,
         "media": [
           {
-            "fileUrl": "http://localhost:3000/media/gallery/image1.jpg"
+            "fileUrl": "http://localhost:3000/media/gallery/fish1.jpg"
           }
         ],
         "createdAt": "2025-11-15T10:30:00.000Z",
@@ -160,13 +259,13 @@ GET /api/gallery?page=1&limit=10&folderName=Products&isActive=true&search=showca
       "totalMediaFiles": 45,
       "galleriesByOwner": [
         {
-          "owner": "John Doe",
+          "owner": "Sakai Fish Farm",
           "count": 3
         }
       ],
       "galleriesByFolder": [
         {
-          "folderName": "Products",
+          "folderName": "Premium",
           "count": 5
         },
         {
@@ -191,7 +290,33 @@ Retrieves a specific gallery by its ID.
 
 - `galleryId` (required) - MongoDB ObjectId of the gallery
 
-**Response (200 OK):**
+**Response (200 OK) - Exclusive Gallery:**
+
+```json
+{
+  "status": "success",
+  "message": "Gallery retrieved successfully",
+  "data": {
+    "_id": "674d1234567890abcdef1234",
+    "galleryName": "Premium Kohaku Collection",
+    "galleryType": "exclusive",
+    "owner": "Sakai Fish Farm",
+    "fishCode": "KOH-2024-001",
+    "fishType": "Kohaku",
+    "folderName": "Premium",
+    "isActive": true,
+    "media": [
+      {
+        "fileUrl": "http://localhost:3000/media/gallery/fish1.jpg"
+      }
+    ],
+    "createdAt": "2025-11-15T10:30:00.000Z",
+    "updatedAt": "2025-11-15T10:30:00.000Z"
+  }
+}
+```
+
+**Response (200 OK) - Regular Gallery:**
 
 ```json
 {
@@ -226,7 +351,7 @@ Retrieves a specific gallery by its ID.
 
 ### 4. Update Gallery
 
-Updates an existing gallery with optional media file replacement.
+Updates an existing gallery with optional media file replacement. When updating, you can change the gallery type and its associated fields.
 
 **Endpoint:** `PUT /api/gallery/{galleryId}`
 
@@ -239,20 +364,38 @@ Updates an existing gallery with optional media file replacement.
 **Form Fields:** (All optional)
 
 - `galleryName` (optional, 2-100 chars) - Name of the gallery
+- `galleryType` (optional) - Gallery type (`exclusive` or `regular`)
 - `owner` (optional, 2-50 chars) - Owner of the gallery
-- `handling` (optional, 2-100 chars) - Handling information
+- `fishCode` (optional, 2-50 chars) - Fish code (for exclusive type, set to null to clear)
+- `fishType` (optional, 2-100 chars) - Fish type (for exclusive type, set to null to clear)
+- `handling` (optional, 2-100 chars) - Handling information (for regular type, set to null to clear)
 - `folderName` (optional, 2-50 chars) - Folder name
 - `isActive` (optional) - Active status
 - `media` (optional) - Array of media files (replaces all existing media)
 - `keepExistingMedia` (optional, default: true) - Whether to keep existing media
 
-**Example Request:**
+**Example Request (Update Exclusive Gallery):**
+
+```bash
+PUT /api/gallery/674d1234567890abcdef1234
+Content-Type: multipart/form-data
+
+galleryName=Updated Kohaku Collection
+fishCode=KOH-2024-002
+fishType=Tancho Kohaku
+folderName=Premium
+media=@new_fish.jpg
+keepExistingMedia=false
+```
+
+**Example Request (Update Regular Gallery):**
 
 ```bash
 PUT /api/gallery/674d1234567890abcdef1234
 Content-Type: multipart/form-data
 
 galleryName=Updated Product Showcase
+handling=New Marketing Team
 folderName=Activities
 media=@new_image.jpg
 keepExistingMedia=false
@@ -266,14 +409,16 @@ keepExistingMedia=false
   "message": "Gallery updated successfully",
   "data": {
     "_id": "674d1234567890abcdef1234",
-    "galleryName": "Updated Product Showcase",
-    "owner": "John Doe",
-    "handling": "Marketing Team",
-    "folderName": "Activities",
+    "galleryName": "Updated Kohaku Collection",
+    "galleryType": "exclusive",
+    "owner": "Sakai Fish Farm",
+    "fishCode": "KOH-2024-002",
+    "fishType": "Tancho Kohaku",
+    "folderName": "Premium",
     "isActive": true,
     "media": [
       {
-        "fileUrl": "http://localhost:3000/media/gallery/new_image.jpg"
+        "fileUrl": "http://localhost:3000/media/gallery/new_fish.jpg"
       }
     ],
     "createdAt": "2025-11-15T10:30:00.000Z",
@@ -644,16 +789,22 @@ Removes all media files from a gallery.
 
 ## Error Codes
 
-| Status Code | Description                                             |
-| ----------- | ------------------------------------------------------- |
-| 400         | Bad Request - Validation errors, file validation errors |
-| 401         | Unauthorized - Missing or invalid authentication token  |
-| 403         | Forbidden - Insufficient permissions                    |
-| 404         | Not Found - Gallery not found                           |
-| 409         | Conflict - Gallery name already exists                  |
-| 500         | Internal Server Error - Server error                    |
+| Status Code | Description                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| 400         | Bad Request - Validation errors, file validation errors, missing required fields for gallery type |
+| 401         | Unauthorized - Missing or invalid authentication token                                            |
+| 403         | Forbidden - Insufficient permissions                                                              |
+| 404         | Not Found - Gallery not found                                                                     |
+| 409         | Conflict - Gallery name already exists                                                            |
+| 500         | Internal Server Error - Server error                                                              |
 
 ## Validation Rules
+
+### Gallery Type
+
+- Optional when creating (defaults to "regular")
+- Valid values: `exclusive` or `regular`
+- Determines which fields are required
 
 ### Gallery Name
 
@@ -663,13 +814,26 @@ Removes all media files from a gallery.
 
 ### Owner
 
-- Required when creating
+- Required when creating (both types)
 - 2-50 characters
 
-### Handling
+### Fish Code (Exclusive Type Only)
 
-- Required when creating
+- **Required** when galleryType is `exclusive`
+- 2-50 characters
+- Represents the unique fish identification code (kode ikan)
+
+### Fish Type (Exclusive Type Only)
+
+- **Required** when galleryType is `exclusive`
 - 2-100 characters
+- Represents the type/species of fish (jenis ikan)
+
+### Handling (Regular Type Only)
+
+- **Required** when galleryType is `regular`
+- 2-100 characters
+- Represents the handler/team responsible (penangan)
 
 ### Folder Name
 
@@ -683,6 +847,33 @@ Removes all media files from a gallery.
 - Supported formats: Images (jpg, jpeg, png, gif, webp)
 - File size validation applied
 - Files are processed and stored with unique names
+
+## Gallery Type Form Summary
+
+### Exclusive Product Form (`galleryType: "exclusive"`)
+
+| Field       | Required | Description                          |
+| ----------- | -------- | ------------------------------------ |
+| galleryName | ✅ Yes   | Name of the gallery                  |
+| galleryType | ✅ Yes   | Must be `"exclusive"`                |
+| owner       | ✅ Yes   | Owner/breeder name                   |
+| fishCode    | ✅ Yes   | Fish identification code (kode ikan) |
+| fishType    | ✅ Yes   | Fish type/species (jenis)            |
+| folderName  | ❌ No    | Folder name (default: "General")     |
+| isActive    | ❌ No    | Active status (default: true)        |
+| media       | ❌ No    | Media files                          |
+
+### Regular Gallery Form (`galleryType: "regular"`)
+
+| Field       | Required | Description                      |
+| ----------- | -------- | -------------------------------- |
+| galleryName | ✅ Yes   | Name of the gallery              |
+| galleryType | ❌ No    | `"regular"` (default)            |
+| owner       | ✅ Yes   | Owner name                       |
+| handling    | ✅ Yes   | Handler/team (penangan)          |
+| folderName  | ❌ No    | Folder name (default: "General") |
+| isActive    | ❌ No    | Active status (default: true)    |
+| media       | ❌ No    | Media files                      |
 
 ## Folder Integration
 
@@ -704,7 +895,9 @@ The search functionality performs text search across:
 
 - Gallery name
 - Owner name
-- Handling information
+- Handling information (for regular type)
+- Fish code (for exclusive type)
+- Fish type (for exclusive type)
 - Folder name
 
 Search is case-insensitive and supports partial matches.

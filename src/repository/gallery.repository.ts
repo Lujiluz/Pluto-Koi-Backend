@@ -1,11 +1,16 @@
 import { CustomErrorHandler } from "../middleware/errorHandler.js";
-import { GalleryModel, IGallery } from "../models/gallery.model.js";
+import { GalleryModel, IGallery, GalleryType } from "../models/gallery.model.js";
 import { paginationMetadata } from "../utils/pagination.js";
 
 export interface CreateGalleryData {
   galleryName: string;
+  galleryType: GalleryType;
   owner: string;
-  handling: string;
+  // For exclusive product type
+  fishCode?: string;
+  fishType?: string;
+  // For regular type
+  handling?: string;
   folderName?: string;
   isActive?: boolean;
   media?: { fileUrl: string }[];
@@ -13,8 +18,13 @@ export interface CreateGalleryData {
 
 export interface UpdateGalleryData {
   galleryName?: string;
+  galleryType?: GalleryType;
   owner?: string;
-  handling?: string;
+  // For exclusive product type
+  fishCode?: string | null;
+  fishType?: string | null;
+  // For regular type
+  handling?: string | null;
   folderName?: string;
   isActive?: boolean;
   media?: { fileUrl: string }[];
@@ -85,7 +95,7 @@ export class GalleryRepository {
   /**
    * Get all galleries with pagination and filtering
    */
-  async findAll(page: number = 1, limit: number = 10, filters: { isActive?: boolean; search?: string; owner?: string; folderName?: string } = {}): Promise<{ galleries: IGallery[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, filters: { isActive?: boolean; search?: string; owner?: string; folderName?: string; galleryType?: GalleryType } = {}): Promise<{ galleries: IGallery[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
 
@@ -110,6 +120,11 @@ export class GalleryRepository {
       // Filter by folder name
       if (filters.folderName) {
         query.folderName = filters.folderName;
+      }
+
+      // Filter by gallery type
+      if (filters.galleryType) {
+        query.galleryType = filters.galleryType;
       }
 
       const [total] = await Promise.all([GalleryModel.countDocuments(query)]);
