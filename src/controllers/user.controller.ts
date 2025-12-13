@@ -5,9 +5,9 @@ import { NextFunction, Response } from "express";
 class UserController {
   async getAllUsers(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { page = "1", limit = "10", status, search } = req.query;
+      const { page = "1", limit = "10", status, search, approvalStatus } = req.query;
 
-      const result = await userService.getAllUsers(Number(page), Number(limit), status as string | undefined, search as string | undefined);
+      const result = await userService.getAllUsers(Number(page), Number(limit), status as string | undefined, search as string | undefined, approvalStatus as string | undefined);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error retrieving users:", error);
@@ -59,6 +59,49 @@ class UserController {
       res.status(200).json(result);
     } catch (error) {
       console.error("Error unblocking user:", error);
+      next(error);
+    }
+  }
+
+  async approveUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const adminId = req.user?.id;
+
+      if (!adminId) {
+        res.status(401).json({
+          status: "error",
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      const result = await userService.approveUser(id, adminId);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error approving user:", error);
+      next(error);
+    }
+  }
+
+  async rejectUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const adminId = req.user?.id;
+
+      if (!adminId) {
+        res.status(401).json({
+          status: "error",
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      const result = await userService.rejectUser(id, adminId, reason);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error rejecting user:", error);
       next(error);
     }
   }

@@ -1,6 +1,6 @@
 import { userController } from "../controllers/user.controller.js";
 import { adminRouteAuthentication, authenticateToken } from "../middleware/auth.middleware.js";
-import { validateGetAllUsersQuery, validateUserIdParam } from "../validations/user.validation.js";
+import { validateGetAllUsersQuery, validateUserIdParam, validateRejectUser } from "../validations/user.validation.js";
 import { Router } from "express";
 
 const router = Router();
@@ -13,6 +13,7 @@ router.use([authenticateToken, adminRouteAuthentication]);
  * @query   page - Page number (default: 1)
  * @query   limit - Items per page (default: 10)
  * @query   status - Filter by status (active, inactive, banned)
+ * @query   approvalStatus - Filter by approval status (pending, approved, rejected)
  * @query   search - Search by name, email, or phone number
  * @access  Private (Admin only)
  */
@@ -24,6 +25,21 @@ router.get("", validateGetAllUsersQuery, userController.getAllUsers.bind(userCon
  * @access  Private (Admin only)
  */
 router.get("/:id", validateUserIdParam, userController.getUserById.bind(userController));
+
+/**
+ * @route   PATCH /api/user/:id/approve
+ * @desc    Approve a pending user registration (sends verification email)
+ * @access  Private (Admin only)
+ */
+router.patch("/:id/approve", validateUserIdParam, userController.approveUser.bind(userController));
+
+/**
+ * @route   PATCH /api/user/:id/reject
+ * @desc    Reject a pending user registration (sends rejection email)
+ * @body    reason - Optional rejection reason
+ * @access  Private (Admin only)
+ */
+router.patch("/:id/reject", validateUserIdParam, validateRejectUser, userController.rejectUser.bind(userController));
 
 /**
  * @route   PATCH /api/user/:id/block

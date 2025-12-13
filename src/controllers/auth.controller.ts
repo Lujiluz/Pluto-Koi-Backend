@@ -139,6 +139,33 @@ export class AuthController {
       });
     }
   }
+
+  /**
+   * Verify approval token from email link
+   * This is the webhook endpoint that handles when user clicks the verification link
+   */
+  async verifyApproval(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const errorPath = process.env.APPROVAL_ERROR_REDIRECT_PATH || "/approval-error";
+        res.redirect(`${frontendUrl}${errorPath}?error=missing_token`);
+        return;
+      }
+
+      const result = await authService.verifyApprovalToken(token);
+
+      // Redirect to frontend URL based on result
+      res.redirect(result.redirectUrl);
+    } catch (error) {
+      console.error("Verify approval controller error:", error);
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      const errorPath = process.env.APPROVAL_ERROR_REDIRECT_PATH || "/approval-error";
+      res.redirect(`${frontendUrl}${errorPath}?error=verification_failed`);
+    }
+  }
 }
 
 export const authController = new AuthController();

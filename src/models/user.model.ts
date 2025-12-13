@@ -6,6 +6,12 @@ export enum UserRole {
   END_USER = "endUser",
 }
 
+export enum ApprovalStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+}
+
 export interface IAddress {
   street: string;
   city: string;
@@ -25,6 +31,14 @@ export interface IUser extends Document {
   address?: IAddress;
   deleted: boolean;
   status: UserStatus;
+  approvalStatus: ApprovalStatus;
+  approvalToken: string | null;
+  approvalTokenExpiry: Date | null;
+  approvedAt: Date | null;
+  approvedBy: string | null;
+  rejectedAt: Date | null;
+  rejectedBy: string | null;
+  rejectionReason: string | null;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -99,6 +113,39 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: null,
     },
+    approvalStatus: {
+      type: String,
+      enum: Object.values(ApprovalStatus),
+      default: ApprovalStatus.PENDING,
+    },
+    approvalToken: {
+      type: String,
+      default: null,
+    },
+    approvalTokenExpiry: {
+      type: Date,
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+    approvedBy: {
+      type: String,
+      default: null,
+    },
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+    rejectedBy: {
+      type: String,
+      default: null,
+    },
+    rejectionReason: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -107,6 +154,8 @@ const userSchema = new Schema<IUser>(
 
 userSchema.index({ deleted: 1 });
 userSchema.index({ email: 1, name: 1, phoneNumber: 1 });
+userSchema.index({ approvalStatus: 1 });
+userSchema.index({ approvalToken: 1 });
 
 // Hash password before saving
 userSchema.pre<IUser>("save", async function (next) {

@@ -2,9 +2,10 @@ import jwt from "jsonwebtoken";
 import { userRepository } from "../repository/user.repository.js";
 import { AuthResponse, JwtPayload, TokenResponse } from "../interfaces/auth.interface.js";
 import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
-import { IUser } from "../models/user.model.js";
+import { ApprovalStatus, IUser, UserRole } from "../models/user.model.js";
 import { CustomErrorHandler, ResponseError } from "../middleware/errorHandler.js";
-import { success } from "zod";
+import { emailService } from "./email.service.js";
+import { v4 as uuidv4 } from "uuid";
 
 export class AuthService {
   private readonly jwtSecret: string;
@@ -21,6 +22,8 @@ export class AuthService {
 
   /**
    * Register a new user
+   * End users will have pending approval status
+   * Admin users will be auto-approved
    */
   async register(registerData: RegisterInput): Promise<AuthResponse> {
     try {
@@ -33,7 +36,11 @@ export class AuthService {
         };
       }
 
-      // Create new user
+      // Determine approval status based on role
+      const isAdmin = registerData.role === UserRole.ADMIN;
+      const approvalStatus = isAdmin ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING;
+
+      // Create new user with appropriate approval status
       const user = await userRepository.create({
         name: registerData.name,
         email: registerData.email,
@@ -41,9 +48,23 @@ export class AuthService {
         phoneNumber: registerData.phoneNumber,
         role: registerData.role,
         address: registerData.address,
+        approvalStatus: approvalStatus,
       });
 
-      // Generate JWT token
+      // If end user, send pending approval notification email
+      if (!isAdmin) {
+        await emailService.sendPendingApprovalEmail(user.name, user.email);
+
+        return {
+          status: "success",
+          message: "Registration successful! Your account is pending approval. You will receive an email once approved.",
+          data: {
+            user: user.toJSON() as Omit<IUser, "password">,
+          },
+        };
+      }
+
+      // For admin users, generate JWT token immediately
       const tokenData = this.generateToken(user);
 
       return {
@@ -82,6 +103,16 @@ export class AuthService {
       // Check if user is deleted
       if (user.deleted) {
         throw ResponseError.forbidden("This account has been deleted");
+      }
+
+      // Check approval status for non-admin users
+      if (user.role !== UserRole.ADMIN) {
+        if (user.approvalStatus === ApprovalStatus.PENDING) {
+          throw ResponseError.forbidden("Your account is pending approval. Please wait for admin approval.");
+        }
+        if (user.approvalStatus === ApprovalStatus.REJECTED) {
+          throw ResponseError.forbidden("Your registration has been rejected. Please contact support for more information.");
+        }
       }
 
       // Check password
@@ -170,6 +201,45 @@ export class AuthService {
     } catch (error) {
       console.error("User validation error:", error);
       return null;
+    }
+  }
+
+  /**
+   * Verify approval token from email link
+   * This is called when user clicks the verification link in their email
+   */
+  async verifyApprovalToken(token: string): Promise<{ success: boolean; message: string; redirectUrl: string }> {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const successRedirectPath = process.env.APPROVAL_SUCCESS_REDIRECT_PATH || "/login";
+    const errorRedirectPath = process.env.APPROVAL_ERROR_REDIRECT_PATH || "/approval-error";
+
+    try {
+      // Find user by approval token
+      const user = await userRepository.findByApprovalToken(token);
+
+      if (!user) {
+        return {
+          success: false,
+          message: "Invalid or expired approval token",
+          redirectUrl: `${frontendUrl}${errorRedirectPath}?error=invalid_token`,
+        };
+      }
+
+      // Clear the approval token and set status to approved
+      await userRepository.clearApprovalToken(user.id as string);
+
+      return {
+        success: true,
+        message: "Account activated successfully! You can now login.",
+        redirectUrl: `${frontendUrl}${successRedirectPath}?verified=true`,
+      };
+    } catch (error) {
+      console.error("Verify approval token error:", error);
+      return {
+        success: false,
+        message: "Failed to verify approval token",
+        redirectUrl: `${frontendUrl}${errorRedirectPath}?error=verification_failed`,
+      };
     }
   }
 }

@@ -1,5 +1,5 @@
 import { CustomErrorHandler } from "../middleware/errorHandler.js";
-import { UserModel, IUser, UserRole } from "../models/user.model.js";
+import { UserModel, IUser, UserRole, ApprovalStatus } from "../models/user.model.js";
 import { paginationMetadata } from "../utils/pagination.js";
 
 export interface CreateUserData {
@@ -15,6 +15,7 @@ export interface CreateUserData {
     zipCode: string;
     country: string;
   };
+  approvalStatus?: ApprovalStatus;
 }
 
 export interface UpdateUserData {
@@ -96,7 +97,7 @@ export class UserRepository {
   /**
    * Get all users (with pagination, filtering, and search)
    */
-  async findAll(page: number = 1, limit: number = 10, status?: string, search?: string): Promise<{ users: IUser[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, status?: string, search?: string, approvalStatus?: string): Promise<{ users: IUser[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
 
@@ -108,13 +109,33 @@ export class UserRepository {
         filter.status = status;
       }
 
+      // Add approvalStatus filter if provided
+      if (approvalStatus && ["pending", "approved", "rejected"].includes(approvalStatus)) {
+        filter.approvalStatus = approvalStatus;
+      }
+
       // Add search filter if provided
       if (search) {
         const searchRegex = new RegExp(search, "i");
         filter.$or = [{ name: searchRegex }, { email: searchRegex }, { phoneNumber: searchRegex }];
       }
 
-      const [users, total] = await Promise.all([UserModel.find(filter, { name: 1, email: 1, role: 1, status: 1, phoneNumber: 1, createdAt: 1 }).skip(skip).limit(limit).sort({ createdAt: -1 }), UserModel.countDocuments(filter)]);
+      const [users, total] = await Promise.all([
+        UserModel.find(filter, {
+          name: 1,
+          email: 1,
+          role: 1,
+          status: 1,
+          approvalStatus: 1,
+          phoneNumber: 1,
+          address: 1,
+          createdAt: 1,
+        })
+          .skip(skip)
+          .limit(limit)
+          .sort({ createdAt: -1 }),
+        UserModel.countDocuments(filter),
+      ]);
 
       const metadata = paginationMetadata(page, limit, total);
 
@@ -130,12 +151,12 @@ export class UserRepository {
   async getUserStats(): Promise<{ totalUsers: number; totalUsersTrend: number; totalDeletedUsers: number; totalDeletedUsersTrend: number; totalBlockedUsers: number; totalBlockedUsersTrend: number }> {
     try {
       const [totalUsers, totalDeletedUsers, totalBlockedUsers, totalUsersYesterday, totalDeletedUsersYesterday, totalBlockedUsersYesterday] = await Promise.all([
-        UserModel.countDocuments({ deleted: false, role: {$ne: "admin"} }),
-        UserModel.countDocuments({ deleted: true, role: {$ne: "admin"} }),
-        await UserModel.countDocuments({ status: "banned", deleted: false, role: {$ne: "admin"} }),
-        UserModel.countDocuments({ deleted: false, role: {$ne: "admin"}, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
-        UserModel.countDocuments({ deleted: true, role: {$ne: "admin"}, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
-        UserModel.countDocuments({ status: "banned", deleted: false, role: {$ne: "admin"}, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ deleted: false, role: { $ne: "admin" } }),
+        UserModel.countDocuments({ deleted: true, role: { $ne: "admin" } }),
+        await UserModel.countDocuments({ status: "banned", deleted: false, role: { $ne: "admin" } }),
+        UserModel.countDocuments({ deleted: false, role: { $ne: "admin" }, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ deleted: true, role: { $ne: "admin" }, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        UserModel.countDocuments({ status: "banned", deleted: false, role: { $ne: "admin" }, createdAt: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
       ]);
 
       const totalUsersTrend = this.countTrends(totalUsers, totalUsersYesterday);
@@ -177,6 +198,139 @@ export class UserRepository {
       return await UserModel.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to update user status");
+    }
+  }
+
+  /**
+   * Find user by approval token
+   */
+  async findByApprovalToken(token: string): Promise<IUser | null> {
+    try {
+      return await UserModel.findOne({
+        approvalToken: token,
+        approvalTokenExpiry: { $gt: new Date() },
+      });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to find user by approval token");
+    }
+  }
+
+  /**
+   * Update user approval status
+   */
+  async updateApprovalStatus(
+    id: string,
+    approvalStatus: ApprovalStatus,
+    additionalData?: {
+      approvalToken?: string | null;
+      approvalTokenExpiry?: Date | null;
+      approvedAt?: Date | null;
+      approvedBy?: string | null;
+      rejectedAt?: Date | null;
+      rejectedBy?: string | null;
+      rejectionReason?: string | null;
+    }
+  ): Promise<IUser | null> {
+    try {
+      const updateData: any = { approvalStatus, ...additionalData };
+      return await UserModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to update approval status");
+    }
+  }
+
+  /**
+   * Find all pending users (users waiting for approval)
+   */
+  async findPendingUsers(page: number = 1, limit: number = 10, search?: string): Promise<{ users: IUser[]; metadata: any }> {
+    try {
+      const skip = (page - 1) * limit;
+
+      const filter: any = {
+        role: { $ne: "admin" },
+        deleted: false,
+        approvalStatus: ApprovalStatus.PENDING,
+      };
+
+      if (search) {
+        const searchRegex = new RegExp(search, "i");
+        filter.$or = [{ name: searchRegex }, { email: searchRegex }, { phoneNumber: searchRegex }];
+      }
+
+      const [users, total] = await Promise.all([
+        UserModel.find(filter, {
+          name: 1,
+          email: 1,
+          role: 1,
+          status: 1,
+          phoneNumber: 1,
+          approvalStatus: 1,
+          address: 1,
+          createdAt: 1,
+        })
+          .skip(skip)
+          .limit(limit)
+          .sort({ createdAt: -1 }),
+        UserModel.countDocuments(filter),
+      ]);
+
+      const metadata = paginationMetadata(page, limit, total);
+
+      return { users, metadata };
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to fetch pending users");
+    }
+  }
+
+  /**
+   * Get pending users count
+   */
+  async getPendingUsersCount(): Promise<number> {
+    try {
+      return await UserModel.countDocuments({
+        role: { $ne: "admin" },
+        deleted: false,
+        approvalStatus: ApprovalStatus.PENDING,
+      });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to get pending users count");
+    }
+  }
+
+  /**
+   * Set approval token for user
+   */
+  async setApprovalToken(id: string, token: string, expiry: Date): Promise<IUser | null> {
+    try {
+      return await UserModel.findByIdAndUpdate(
+        id,
+        {
+          approvalToken: token,
+          approvalTokenExpiry: expiry,
+        },
+        { new: true, runValidators: true }
+      );
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to set approval token");
+    }
+  }
+
+  /**
+   * Clear approval token after successful verification
+   */
+  async clearApprovalToken(id: string): Promise<IUser | null> {
+    try {
+      return await UserModel.findByIdAndUpdate(
+        id,
+        {
+          approvalToken: null,
+          approvalTokenExpiry: null,
+          approvalStatus: ApprovalStatus.APPROVED,
+        },
+        { new: true, runValidators: true }
+      );
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to clear approval token");
     }
   }
 

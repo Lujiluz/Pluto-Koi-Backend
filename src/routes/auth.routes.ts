@@ -11,17 +11,24 @@ router.use(authLoggingMiddleware);
 
 /**
  * @route   POST /api/auth/register
- * @desc    Register a new user
+ * @desc    Register a new user (status will be pending for end users)
  * @access  Public
  */
 router.post("/register", validateRegister, authController.register.bind(authController));
 
 /**
  * @route   POST /api/auth/login
- * @desc    Login user
+ * @desc    Login user (only approved users can login)
  * @access  Public
  */
 router.post("/login", validateLogin, authController.login.bind(authController));
+
+/**
+ * @route   GET /api/auth/verify-approval/:token
+ * @desc    Verify approval token from email link (webhook endpoint)
+ * @access  Public
+ */
+router.get("/verify-approval/:token", authController.verifyApproval.bind(authController));
 
 /**
  * @route   GET /api/auth/profile

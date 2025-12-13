@@ -6,7 +6,7 @@ export interface AuthResponse {
   message: string;
   data?: {
     user: Omit<IUser, "password">;
-    token: string;
+    token?: string;
   };
 }
 
