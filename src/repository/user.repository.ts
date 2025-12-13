@@ -16,6 +16,7 @@ export interface CreateUserData {
     country: string;
   };
   approvalStatus?: ApprovalStatus;
+  status?: "active" | "inactive" | "banned";
 }
 
 export interface UpdateUserData {

@@ -36,11 +36,13 @@ export class AuthService {
         };
       }
 
-      // Determine approval status based on role
+      // Determine approval status and user status based on role
       const isAdmin = registerData.role === UserRole.ADMIN;
       const approvalStatus = isAdmin ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING;
+      const userStatus = isAdmin ? "active" : "inactive";
 
       // Create new user with appropriate approval status
+      // Admin users are immediately active and approved (no email verification needed)
       const user = await userRepository.create({
         name: registerData.name,
         email: registerData.email,
@@ -49,6 +51,7 @@ export class AuthService {
         role: registerData.role,
         address: registerData.address,
         approvalStatus: approvalStatus,
+        status: userStatus,
       });
 
       // If end user, send pending approval notification email
