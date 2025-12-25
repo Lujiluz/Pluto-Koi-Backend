@@ -1,8 +1,11 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
+import cookie from "cookie";
 import { logger } from "../utils/logger.js";
 import { WebSocketEvents, LeaderboardUpdatePayload, TimeExtensionPayload, NewBidPayload, AuctionEndedPayload, ErrorPayload, JoinAuctionRequest, LeaveAuctionRequest } from "../interfaces/websocket.interface.js";
+import { AUTH_COOKIE_NAME } from "../interfaces/auth.interface.js";
+import { authService } from "./auth.service.js";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -47,9 +50,12 @@ export class WebSocketService {
     try {
       logger.info("🔄 Initializing WebSocket service...");
 
+      // Get allowed origins from environment variable
+      const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://localhost:3000").split(",");
+
       this.io = new SocketIOServer(server, {
         cors: {
-          origin: "*", // Configure this based on your frontend URL in production
+          origin: allowedOrigins, // Use same origins as REST API
           methods: ["GET", "POST"],
           credentials: true,
         },
@@ -80,13 +86,32 @@ export class WebSocketService {
 
   /**
    * Setup middleware for authentication
+   * Supports token from: cookie, auth object, or Authorization header
    */
   private setupMiddleware(): void {
     if (!this.io) return;
 
     this.io.use(async (socket: AuthenticatedSocket, next) => {
       try {
-        const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(" ")[1];
+        // Try to extract token from multiple sources
+        let token: string | undefined;
+
+        // 1. Try cookie first (from handshake headers)
+        const cookieHeader = socket.handshake.headers.cookie;
+        if (cookieHeader) {
+          const cookies = cookie.parse(cookieHeader);
+          token = cookies[AUTH_COOKIE_NAME];
+        }
+
+        // 2. Fallback to auth object
+        if (!token) {
+          token = socket.handshake.auth.token;
+        }
+
+        // 3. Fallback to Authorization header
+        if (!token) {
+          token = socket.handshake.headers.authorization?.split(" ")[1];
+        }
 
         if (!token) {
           logger.warn("WebSocket connection attempt without token", {
@@ -102,8 +127,28 @@ export class WebSocketService {
           return next(new Error("Server configuration error"));
         }
 
-        const decoded = jwt.verify(token, jwtSecret) as { id: string; role: string };
-        socket.userId = decoded.id;
+        const decoded = jwt.verify(token, jwtSecret) as { userId: string; role: string };
+
+        // Validate session exists in database
+        const isValidSession = await authService.validateSession(token);
+        if (!isValidSession) {
+          logger.warn("WebSocket connection with invalid/expired session", {
+            socketId: socket.id,
+          });
+          return next(new Error("Session expired or invalid"));
+        }
+
+        // Validate user status
+        const user = await authService.validateUser(decoded.userId);
+        if (!user || user.rejectedAt || user.status !== "active" || user.deleted) {
+          logger.warn("WebSocket connection with invalid user", {
+            socketId: socket.id,
+            userId: decoded.userId,
+          });
+          return next(new Error("User not authorized"));
+        }
+
+        socket.userId = decoded.userId;
         socket.userRole = decoded.role;
 
         logger.info("WebSocket client authenticated", {
