@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request, CookieOptions } from "express";
 import { IUser, UserRole } from "../models/user.model.js";
 
 export interface AuthResponse {
@@ -38,6 +38,7 @@ export interface AuthenticatedRequest extends Request {
 export interface TokenResponse {
   token: string;
   expiresIn: string;
+  maxAge: number; // Cookie maxAge in milliseconds
 }
 
 export interface ApiResponse<T = any> {
@@ -46,3 +47,14 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
 }
+
+// Cookie configuration
+export const AUTH_COOKIE_NAME = "auth_token";
+
+export const getCookieOptions = (maxAge: number): CookieOptions => ({
+  httpOnly: true, // Prevents XSS attacks - cookie cannot be accessed via JavaScript
+  secure: process.env.NODE_ENV === "production", // Only send cookie over HTTPS in production
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax", // CSRF protection
+  maxAge, // Cookie expiration in milliseconds
+  path: "/", // Cookie available for all routes
+});

@@ -1,15 +1,34 @@
 import { Response, NextFunction } from "express";
 import { authService } from "../services/auth.service.js";
-import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { AuthenticatedRequest, AUTH_COOKIE_NAME } from "../interfaces/auth.interface.js";
+
+/**
+ * Extract token from request (cookie or Authorization header)
+ */
+const extractToken = (req: AuthenticatedRequest): string | null => {
+  // First, try to get token from HTTP-only cookie
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME];
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  // Fallback to Authorization header (for backward compatibility)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1];
+  }
+
+  return null;
+};
 
 /**
  * Middleware to verify JWT token and authenticate user
+ * Supports both cookie-based and header-based authentication
  * Also validates session exists in database
  */
 export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = extractToken(req);
 
     if (!token) {
       res.status(401).json({
@@ -144,12 +163,12 @@ export const requireAdmin = requireRole(["admin"]);
 
 /**
  * Optional authentication middleware - doesn't fail if no token
+ * Supports both cookie-based and header-based authentication
  * Also validates session if token is provided
  */
 export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = extractToken(req);
 
     if (token) {
       const decoded = authService.verifyToken(token);

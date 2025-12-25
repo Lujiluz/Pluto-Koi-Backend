@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { authService } from "../services/auth.service.js";
 import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
-import { AuthenticatedRequest, LoginType } from "../interfaces/auth.interface.js";
+import { AuthenticatedRequest, LoginType, AUTH_COOKIE_NAME, getCookieOptions } from "../interfaces/auth.interface.js";
 import { ResponseError } from "../middleware/errorHandler.js";
 
 export class AuthController {
@@ -39,13 +39,17 @@ export class AuthController {
       // Get request info for session tracking
       const requestInfo = {
         userAgent: req.headers["user-agent"],
-        ipAddress: req.ip || req.socket.remoteAddress,
+        ipAddress: this.getUserIp(req),
       };
 
       // Login user with type "user" (end user only)
       const result = await authService.login(loginData, "user", requestInfo);
 
-      if (result.status === "success") {
+      if (result.status === "success" && result.data?.token) {
+        // Set HTTP-only cookie with the token
+        const tokenData = await authService.getTokenData(result.data.token);
+        res.cookie(AUTH_COOKIE_NAME, result.data.token, getCookieOptions(tokenData?.maxAge || 7 * 24 * 60 * 60 * 1000));
+
         res.status(200).json(result);
       } else {
         res.status(401).json(result);
@@ -53,6 +57,23 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
+  }
+
+  private getUserIp(req: Request): string | "N/A" {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (forwarded) {
+      const forwardedStr = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+      return forwardedStr.split(",")[0].trim();
+    }
+    const realIp = req.headers["x-real-ip"];
+    if (realIp) {
+      return Array.isArray(realIp) ? realIp[0] : realIp;
+    }
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (cfIp) {
+      return Array.isArray(cfIp) ? cfIp[0] : cfIp;
+    }
+    return req.socket.remoteAddress || req.connection.remoteAddress || "N/A";
   }
 
   /**
@@ -67,13 +88,17 @@ export class AuthController {
       // Get request info for session tracking
       const requestInfo = {
         userAgent: req.headers["user-agent"],
-        ipAddress: req.ip || req.socket.remoteAddress,
+        ipAddress: this.getUserIp(req),
       };
 
       // Login with type "admin" (admin only)
       const result = await authService.login(loginData, "admin", requestInfo);
 
-      if (result.status === "success") {
+      if (result.status === "success" && result.data?.token) {
+        // Set HTTP-only cookie with the token
+        const tokenData = await authService.getTokenData(result.data.token);
+        res.cookie(AUTH_COOKIE_NAME, result.data.token, getCookieOptions(tokenData?.maxAge || 7 * 24 * 60 * 60 * 1000));
+
         res.status(200).json(result);
       } else {
         res.status(401).json(result);
@@ -152,18 +177,25 @@ export class AuthController {
   }
 
   /**
-   * Logout user - invalidate session in database
+   * Logout user - invalidate session in database and clear cookie
    */
   async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      // Extract token from header
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.split(" ")[1];
+      // Extract token from cookie or header
+      const token = req.cookies?.[AUTH_COOKIE_NAME] || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
       if (token) {
         // Invalidate session in database
         await authService.logout(token);
       }
+
+      // Clear the auth cookie
+      res.clearCookie(AUTH_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        path: "/",
+      });
 
       res.status(200).json({
         success: true,
@@ -179,7 +211,7 @@ export class AuthController {
   }
 
   /**
-   * Logout all sessions for current user
+   * Logout all sessions for current user and clear cookie
    */
   async logoutAll(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
@@ -193,6 +225,14 @@ export class AuthController {
 
       // Invalidate all sessions for user
       const deletedCount = await authService.logoutAllSessions(req.user.id);
+
+      // Clear the auth cookie
+      res.clearCookie(AUTH_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        path: "/",
+      });
 
       res.status(200).json({
         success: true,

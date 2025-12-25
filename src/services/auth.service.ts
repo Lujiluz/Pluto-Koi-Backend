@@ -180,6 +180,7 @@ export class AuthService {
     return {
       token,
       expiresIn: this.jwtExpiresIn,
+      maxAge: this.calculateMaxAgeMs(),
     };
   }
 
@@ -189,6 +190,7 @@ export class AuthService {
   private async generateTokenWithSession(user: IUser, requestInfo?: { userAgent?: string; ipAddress?: string }): Promise<TokenResponse> {
     // Calculate expiration date based on jwtExpiresIn
     const expiresAt = this.calculateExpirationDate();
+    const maxAge = this.calculateMaxAgeMs();
 
     // Generate unique session ID
     const sessionId = uuidv4();
@@ -216,45 +218,45 @@ export class AuthService {
     return {
       token,
       expiresIn: this.jwtExpiresIn,
+      maxAge,
     };
   }
 
   /**
-   * Calculate expiration date from JWT_EXPIRES_IN string
+   * Calculate max age in milliseconds from JWT_EXPIRES_IN string
    */
-  private calculateExpirationDate(): Date {
-    const now = new Date();
+  private calculateMaxAgeMs(): number {
     const expiresIn = this.jwtExpiresIn;
 
     // Parse the expiration string (e.g., "7d", "24h", "60m", "3600s")
     const match = expiresIn.match(/^(\d+)([dhms])$/);
     if (!match) {
       // Default to 7 days if parsing fails
-      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return 7 * 24 * 60 * 60 * 1000;
     }
 
     const value = parseInt(match[1], 10);
     const unit = match[2];
 
-    let milliseconds: number;
     switch (unit) {
       case "d":
-        milliseconds = value * 24 * 60 * 60 * 1000;
-        break;
+        return value * 24 * 60 * 60 * 1000;
       case "h":
-        milliseconds = value * 60 * 60 * 1000;
-        break;
+        return value * 60 * 60 * 1000;
       case "m":
-        milliseconds = value * 60 * 1000;
-        break;
+        return value * 60 * 1000;
       case "s":
-        milliseconds = value * 1000;
-        break;
+        return value * 1000;
       default:
-        milliseconds = 7 * 24 * 60 * 60 * 1000;
+        return 7 * 24 * 60 * 60 * 1000;
     }
+  }
 
-    return new Date(now.getTime() + milliseconds);
+  /**
+   * Calculate expiration date from JWT_EXPIRES_IN string
+   */
+  private calculateExpirationDate(): Date {
+    return new Date(Date.now() + this.calculateMaxAgeMs());
   }
 
   /**
@@ -331,6 +333,28 @@ export class AuthService {
     } catch (error) {
       console.error("Logout all sessions error:", error);
       return 0;
+    }
+  }
+
+  /**
+   * Get token data (maxAge) for cookie configuration
+   */
+  async getTokenData(token: string): Promise<{ maxAge: number } | null> {
+    try {
+      const decoded = this.verifyToken(token);
+      if (!decoded) return null;
+
+      // Calculate remaining time until expiration
+      if (decoded.exp) {
+        const maxAge = decoded.exp * 1000 - Date.now();
+        return { maxAge: Math.max(maxAge, 0) };
+      }
+
+      // Default to calculated maxAge if no exp in token
+      return { maxAge: this.calculateMaxAgeMs() };
+    } catch (error) {
+      console.error("Get token data error:", error);
+      return null;
     }
   }
 
