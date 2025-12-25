@@ -19,6 +19,12 @@ export interface CreateUserData {
   status?: "active" | "inactive" | "banned";
 }
 
+export interface CreateAdminData {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export interface UpdateUserData {
   name?: string;
   email?: string;
@@ -43,7 +49,7 @@ export class UserRepository {
    */
   async findByEmail(email: string): Promise<IUser | null> {
     try {
-      return await UserModel.findOne({ email: email.toLowerCase() });
+      return await UserModel.findOne({ email: email.toLowerCase(), deletedAt: { $eq: null } });
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to find user by email");
     }
@@ -76,8 +82,9 @@ export class UserRepository {
    */
   async deleteById(id: string): Promise<boolean> {
     try {
-      const result = await UserModel.updateOne({ _id: id }, { deleted: true, deletedAt: new Date() });
-      return result.modifiedCount > 0;
+      // const result = await UserModel.updateOne({ _id: id }, { deleted: true, deletedAt: new Date() });
+      const result = await UserModel.deleteOne({ _id: id });
+      return result.deletedCount > 0;
     } catch (error) {
       throw new CustomErrorHandler(500, "Failed to delete user");
     }
@@ -98,12 +105,19 @@ export class UserRepository {
   /**
    * Get all users (with pagination, filtering, and search)
    */
-  async findAll(page: number = 1, limit: number = 10, status?: string, search?: string, approvalStatus?: string): Promise<{ users: IUser[]; metadata: any }> {
+  async findAll(page: number = 1, limit: number = 10, status?: string, search?: string, approvalStatus?: string, role?: string): Promise<{ users: IUser[]; metadata: any }> {
     try {
       const skip = (page - 1) * limit;
 
       // Build filter query
-      const filter: any = { role: { $ne: "admin" }, deleted: false };
+      const filter: any = { deleted: false };
+
+      // Add role filter if provided, otherwise exclude admins by default
+      if (role && ["admin", "endUser"].includes(role)) {
+        filter.role = role;
+      } else {
+        filter.role = { $ne: "admin" };
+      }
 
       // Add status filter if provided
       if (status && ["active", "inactive", "banned"].includes(status)) {
@@ -337,6 +351,101 @@ export class UserRepository {
 
   private countTrends(totalToday: number, totalYesterday: number): number {
     return totalYesterday > 0 ? parseFloat((((totalToday - totalYesterday) / totalYesterday) * 100).toFixed(2)) : 0;
+  }
+
+  // ==================== ADMIN MANAGEMENT METHODS ====================
+
+  /**
+   * Create a new admin user (simplified - no address, phone number, or approval required)
+   */
+  async createAdmin(adminData: CreateAdminData): Promise<IUser> {
+    try {
+      const user = new UserModel({
+        name: adminData.name,
+        email: adminData.email,
+        password: adminData.password,
+        role: UserRole.ADMIN,
+        phoneNumber: "0800000000", // Not required for admin
+        approvalStatus: ApprovalStatus.APPROVED, // Auto-approved
+        status: "active",
+      });
+      return await user.save();
+    } catch (error) {
+      throw new CustomErrorHandler(500, error instanceof Error ? error.message : "Failed to create admin user");
+    }
+  }
+
+  /**
+   * Get all admin users (with pagination and search)
+   */
+  async findAllAdmins(page: number = 1, limit: number = 10, search?: string): Promise<{ admins: IUser[]; metadata: any }> {
+    try {
+      const skip = (page - 1) * limit;
+
+      const filter: any = { role: UserRole.ADMIN, deleted: false };
+
+      if (search) {
+        const searchRegex = new RegExp(search, "i");
+        filter.$or = [{ name: searchRegex }, { email: searchRegex }];
+      }
+
+      const [admins, total] = await Promise.all([
+        UserModel.find(filter, {
+          name: 1,
+          email: 1,
+          role: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        })
+          .skip(skip)
+          .limit(limit)
+          .sort({ createdAt: -1 }),
+        UserModel.countDocuments(filter),
+      ]);
+
+      const metadata = paginationMetadata(page, limit, total);
+
+      return { admins, metadata };
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to fetch admin users");
+    }
+  }
+
+  /**
+   * Get admin user by ID
+   */
+  async findAdminById(id: string): Promise<IUser | null> {
+    try {
+      return await UserModel.findOne({ _id: id, role: UserRole.ADMIN, deleted: false });
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to find admin by ID");
+    }
+  }
+
+  /**
+   * Delete admin by ID (soft delete)
+   */
+  async deleteAdminById(id: string): Promise<boolean> {
+    try {
+      const result = await UserModel.deleteOne({ _id: id, role: UserRole.ADMIN });
+      return result.deletedCount > 0;
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to delete admin");
+    }
+  }
+
+  /**
+   * Get admin statistics
+   */
+  async getAdminStats(): Promise<{ totalAdmins: number; activeAdmins: number }> {
+    try {
+      const [totalAdmins, activeAdmins] = await Promise.all([UserModel.countDocuments({ role: UserRole.ADMIN, deleted: false }), UserModel.countDocuments({ role: UserRole.ADMIN, deleted: false, status: "active" })]);
+
+      return { totalAdmins, activeAdmins };
+    } catch (error) {
+      throw new CustomErrorHandler(500, "Failed to get admin statistics");
+    }
   }
 }
 

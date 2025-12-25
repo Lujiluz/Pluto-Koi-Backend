@@ -7,6 +7,7 @@ import categoryRoutes from "./category.routes.js";
 import galleryRoutes from "./gallery.routes.js";
 import galleryFolderRoutes from "./gallery-folder.routes.js";
 import userRoutes from "./user.routes.js";
+import adminRoutes from "./admin.routes.js";
 import wishlistRoutes from "./wishlist.routes.js";
 import generalRulesRoutes from "./general-rules.routes.js";
 import transactionRoutes from "./transaction.routes.js";
@@ -17,6 +18,7 @@ const router = Router();
 // Mount auth routes
 router.use("/auth", authRoutes);
 router.use("/user", userRoutes);
+router.use("/admin", adminRoutes);
 router.use("/auction", auctionRoutes);
 router.use("/auction-activity", auctionActivityRoutes);
 router.use("/product", productRoutes);

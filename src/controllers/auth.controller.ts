@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { authService } from "../services/auth.service.js";
 import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
 import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { ResponseError } from "../middleware/errorHandler.js";
 
 export class AuthController {
   /**
@@ -30,7 +31,7 @@ export class AuthController {
    * Login user
    * Note: Validation is handled by middleware, req.body is already validated and sanitized
    */
-  async login(req: Request, res: Response): Promise<void> {
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // At this point, req.body is already validated and sanitized by Zod middleware
       const loginData = req.body as LoginInput;
@@ -44,11 +45,7 @@ export class AuthController {
         res.status(401).json(result);
       }
     } catch (error) {
-      console.error("Login controller error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Internal server error during login",
-      });
+      next(error);
     }
   }
 

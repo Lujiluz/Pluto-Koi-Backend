@@ -5,9 +5,9 @@ import { NextFunction, Response } from "express";
 class UserController {
   async getAllUsers(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { page = "1", limit = "10", status, search, approvalStatus } = req.query;
+      const { page = "1", limit = "10", status, search, approvalStatus, role } = req.query;
 
-      const result = await userService.getAllUsers(Number(page), Number(limit), status as string | undefined, search as string | undefined, approvalStatus as string | undefined);
+      const result = await userService.getAllUsers(Number(page), Number(limit), status as string | undefined, search as string | undefined, approvalStatus as string | undefined, role as string | undefined);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error retrieving users:", error);
@@ -102,6 +102,98 @@ class UserController {
       res.status(200).json(result);
     } catch (error) {
       console.error("Error rejecting user:", error);
+      next(error);
+    }
+  }
+
+  // ==================== ADMIN MANAGEMENT ENDPOINTS ====================
+
+  async createAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { name, email, password } = req.body;
+
+      const result = await userService.createAdmin(name, email, password);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      next(error);
+    }
+  }
+
+  async getAllAdmins(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page = "1", limit = "10", search } = req.query;
+
+      const result = await userService.getAllAdmins(Number(page), Number(limit), search as string | undefined);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error retrieving admins:", error);
+      next(error);
+    }
+  }
+
+  async getAdminById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const result = await userService.getAdminById(id);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error retrieving admin:", error);
+      next(error);
+    }
+  }
+
+  async deleteAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const requesterId = req.user?.id;
+
+      if (!requesterId) {
+        res.status(401).json({
+          status: "error",
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      const result = await userService.deleteAdmin(id, requesterId);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      next(error);
+    }
+  }
+
+  async blockAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const requesterId = req.user?.id;
+
+      if (!requesterId) {
+        res.status(401).json({
+          status: "error",
+          message: "Unauthorized",
+        });
+        return;
+      }
+
+      const result = await userService.blockAdmin(id, requesterId);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error blocking admin:", error);
+      next(error);
+    }
+  }
+
+  async unblockAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const result = await userService.unblockAdmin(id);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error unblocking admin:", error);
       next(error);
     }
   }

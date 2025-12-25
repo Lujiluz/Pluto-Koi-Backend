@@ -31,6 +31,12 @@ export const getAllUsersQuerySchema = z.object({
     .refine((val) => val === undefined || ["pending", "approved", "rejected"].includes(val), {
       message: "Approval status must be either 'pending', 'approved', or 'rejected'",
     }),
+  role: z
+    .enum(["admin", "endUser"])
+    .optional()
+    .refine((val) => val === undefined || ["admin", "endUser"].includes(val), {
+      message: "Role must be either 'admin' or 'endUser'",
+    }),
   search: z.string().trim().optional(),
 });
 
@@ -51,10 +57,42 @@ export const rejectUserSchema = z.object({
   reason: z.string().trim().max(500, "Reason cannot exceed 500 characters").optional(),
 });
 
+/**
+ * Zod schema for creating admin user
+ */
+export const createAdminSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters long").max(50, "Name cannot exceed 50 characters"),
+  email: z.string().trim().email("Please enter a valid email address").toLowerCase(),
+  password: z.string().min(6, "Password must be at least 6 characters long").max(100, "Password cannot exceed 100 characters"),
+});
+
+/**
+ * Zod schema for getting all admins with filters
+ */
+export const getAllAdminsQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .default("1")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+      message: "Page must be a positive number",
+    }),
+  limit: z
+    .string()
+    .optional()
+    .default("10")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 100, {
+      message: "Limit must be a positive number between 1 and 100",
+    }),
+  search: z.string().trim().optional(),
+});
+
 // Type inference from schemas
 export type GetAllUsersQuery = z.infer<typeof getAllUsersQuerySchema>;
 export type UserIdParam = z.infer<typeof userIdParamSchema>;
 export type RejectUserInput = z.infer<typeof rejectUserSchema>;
+export type CreateAdminInput = z.infer<typeof createAdminSchema>;
+export type GetAllAdminsQuery = z.infer<typeof getAllAdminsQuerySchema>;
 
 /**
  * Generic middleware for validating request query parameters with Zod schemas
@@ -174,3 +212,5 @@ export const validateRequestBody = <T>(schema: z.ZodSchema<T>) => {
 export const validateGetAllUsersQuery = validateRequestQuery(getAllUsersQuerySchema);
 export const validateUserIdParam = validateRequestParams(userIdParamSchema);
 export const validateRejectUser = validateRequestBody(rejectUserSchema);
+export const validateCreateAdmin = validateRequestBody(createAdminSchema);
+export const validateGetAllAdminsQuery = validateRequestQuery(getAllAdminsQuerySchema);
