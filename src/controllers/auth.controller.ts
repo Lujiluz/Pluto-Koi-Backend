@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { authService } from "../services/auth.service.js";
 import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
-import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
+import { AuthenticatedRequest, LoginType } from "../interfaces/auth.interface.js";
 import { ResponseError } from "../middleware/errorHandler.js";
 
 export class AuthController {
@@ -28,7 +28,7 @@ export class AuthController {
   }
 
   /**
-   * Login user
+   * Login user (end user only)
    * Note: Validation is handled by middleware, req.body is already validated and sanitized
    */
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -36,8 +36,42 @@ export class AuthController {
       // At this point, req.body is already validated and sanitized by Zod middleware
       const loginData = req.body as LoginInput;
 
-      // Login user
-      const result = await authService.login(loginData);
+      // Get request info for session tracking
+      const requestInfo = {
+        userAgent: req.headers["user-agent"],
+        ipAddress: req.ip || req.socket.remoteAddress,
+      };
+
+      // Login user with type "user" (end user only)
+      const result = await authService.login(loginData, "user", requestInfo);
+
+      if (result.status === "success") {
+        res.status(200).json(result);
+      } else {
+        res.status(401).json(result);
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Login admin
+   * Note: Validation is handled by middleware, req.body is already validated and sanitized
+   */
+  async loginAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // At this point, req.body is already validated and sanitized by Zod middleware
+      const loginData = req.body as LoginInput;
+
+      // Get request info for session tracking
+      const requestInfo = {
+        userAgent: req.headers["user-agent"],
+        ipAddress: req.ip || req.socket.remoteAddress,
+      };
+
+      // Login with type "admin" (admin only)
+      const result = await authService.login(loginData, "admin", requestInfo);
 
       if (result.status === "success") {
         res.status(200).json(result);
@@ -118,18 +152,54 @@ export class AuthController {
   }
 
   /**
-   * Logout user (client-side token deletion)
+   * Logout user - invalidate session in database
    */
   async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      // Since JWT is stateless, logout is handled client-side
-      // This endpoint can be used for logging purposes
+      // Extract token from header
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(" ")[1];
+
+      if (token) {
+        // Invalidate session in database
+        await authService.logout(token);
+      }
+
       res.status(200).json({
         success: true,
         message: "Logged out successfully",
       });
     } catch (error) {
       console.error("Logout controller error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error during logout",
+      });
+    }
+  }
+
+  /**
+   * Logout all sessions for current user
+   */
+  async logoutAll(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+        return;
+      }
+
+      // Invalidate all sessions for user
+      const deletedCount = await authService.logoutAllSessions(req.user.id);
+
+      res.status(200).json({
+        success: true,
+        message: `Successfully logged out from all ${deletedCount} session(s)`,
+      });
+    } catch (error) {
+      console.error("Logout all controller error:", error);
       res.status(500).json({
         success: false,
         message: "Internal server error during logout",

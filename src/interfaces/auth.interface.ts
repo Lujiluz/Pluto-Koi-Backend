@@ -14,9 +14,12 @@ export interface JwtPayload {
   userId: string;
   email: string;
   role: string;
+  sessionId?: string;
   iat?: number;
   exp?: number;
 }
+
+export type LoginType = "user" | "admin";
 
 export interface AuthenticatedUser {
   id: string;

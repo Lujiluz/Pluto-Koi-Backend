@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from "../interfaces/auth.interface.js";
 
 /**
  * Middleware to verify JWT token and authenticate user
+ * Also validates session exists in database
  */
 export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -28,6 +29,16 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
+    // Validate session exists in database
+    const isValidSession = await authService.validateSession(token);
+    if (!isValidSession) {
+      res.status(401).json({
+        success: false,
+        message: "Session expired or invalid. Please login again.",
+      });
+      return;
+    }
+
     // Validate user still exists
     const user = await authService.validateUser(decoded.userId);
     if (!user) {
@@ -38,11 +49,20 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Check if user is banned
-    if (user.status === "banned") {
-      res.status(403).json({
+    // Check if user is rejected
+    if (user.rejectedAt) {
+      res.status(401).json({
         success: false,
-        message: "Your account has been blocked. Please contact support.",
+        message: "user tidak valid, mohon lakukan pendaftaran akun terlebih dahulu",
+      });
+      return;
+    }
+
+    // Check if user status is not active
+    if (user.status !== "active") {
+      res.status(401).json({
+        success: false,
+        message: "Akun Anda ditangguhkan, mohon hubungi Admin komunitas untuk mendapatkan informasi lanjutan.",
       });
       return;
     }
@@ -124,6 +144,7 @@ export const requireAdmin = requireRole(["admin"]);
 
 /**
  * Optional authentication middleware - doesn't fail if no token
+ * Also validates session if token is provided
  */
 export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -133,14 +154,18 @@ export const optionalAuth = async (req: AuthenticatedRequest, res: Response, nex
     if (token) {
       const decoded = authService.verifyToken(token);
       if (decoded) {
-        const user = await authService.validateUser(decoded.userId);
-        if (user) {
-          req.user = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-          };
+        // Validate session exists in database
+        const isValidSession = await authService.validateSession(token);
+        if (isValidSession) {
+          const user = await authService.validateUser(decoded.userId);
+          if (user && !user.rejectedAt && user.status === "active" && !user.deleted) {
+            req.user = {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            };
+          }
         }
       }
     }

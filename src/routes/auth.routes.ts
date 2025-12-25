@@ -18,10 +18,17 @@ router.post("/register", validateRegister, authController.register.bind(authCont
 
 /**
  * @route   POST /api/auth/login
- * @desc    Login user (only approved users can login)
+ * @desc    Login user (only approved end users can login)
  * @access  Public
  */
 router.post("/login", validateLogin, authController.login.bind(authController));
+
+/**
+ * @route   POST /api/auth/admin/login
+ * @desc    Login admin (only admin users can login)
+ * @access  Public
+ */
+router.post("/admin/login", validateLogin, authController.loginAdmin.bind(authController));
 
 /**
  * @route   GET /api/auth/verify-approval/:token
@@ -46,9 +53,16 @@ router.get("/verify", authenticateToken, authController.verifyToken.bind(authCon
 
 /**
  * @route   POST /api/auth/logout
- * @desc    Logout user (client-side token deletion)
+ * @desc    Logout user (invalidate session in database)
  * @access  Private
  */
 router.post("/logout", authenticateToken, authController.logout.bind(authController));
+
+/**
+ * @route   POST /api/auth/logout-all
+ * @desc    Logout from all sessions for current user
+ * @access  Private
+ */
+router.post("/logout-all", authenticateToken, authController.logoutAll.bind(authController));
 
 export default router;
