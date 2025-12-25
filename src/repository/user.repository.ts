@@ -341,6 +341,7 @@ export class UserRepository {
           approvalToken: null,
           approvalTokenExpiry: null,
           approvalStatus: ApprovalStatus.APPROVED,
+          status: "active",
         },
         { new: true, runValidators: true }
       );
