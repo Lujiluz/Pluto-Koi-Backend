@@ -1,12 +1,14 @@
 import { auctionController } from "../controllers/auction.controller.js";
-import { authenticateToken } from "../middleware/auth.middleware.js";
+import { authenticateAdminToken, authenticateToken } from "../middleware/auth.middleware.js";
 import { uploadAuctionMedia, handleMulterError } from "../middleware/uploadMiddleware.js";
 import { validateCreateAuction, validateAuctionId, validateAuctionPagination } from "../validations/auction.validation.js";
 import { Router } from "express";
 
 const router = Router();
 
-router.use(authenticateToken);
+// All auction management routes require admin authentication
+// router.use(authenticateAdminToken);
+router.use(authenticateToken)
 
 /**
  * @route   GET /api/auction
@@ -50,3 +52,4 @@ router.delete("/:id", validateAuctionId, auctionController.deleteAuctionById.bin
 router.put("/:id", uploadAuctionMedia, handleMulterError, validateAuctionId, auctionController.updateAuction.bind(auctionController));
 
 export default router;
+

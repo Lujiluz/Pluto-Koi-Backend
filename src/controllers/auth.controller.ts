@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { authService } from "../services/auth.service.js";
 import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
-import { AuthenticatedRequest, LoginType, AUTH_COOKIE_NAME, getCookieOptions } from "../interfaces/auth.interface.js";
+import { AuthenticatedRequest, LoginType, AUTH_COOKIE_NAME, ADMIN_AUTH_COOKIE_NAME, getCookieOptions } from "../interfaces/auth.interface.js";
 import { ResponseError } from "../middleware/errorHandler.js";
 
 export class AuthController {
@@ -95,9 +95,9 @@ export class AuthController {
       const result = await authService.login(loginData, "admin", requestInfo);
 
       if (result.status === "success" && result.data?.token) {
-        // Set HTTP-only cookie with the token
+        // Set HTTP-only cookie with the token - use ADMIN cookie name
         const tokenData = await authService.getTokenData(result.data.token);
-        res.cookie(AUTH_COOKIE_NAME, result.data.token, getCookieOptions(tokenData?.maxAge || 7 * 24 * 60 * 60 * 1000));
+        res.cookie(ADMIN_AUTH_COOKIE_NAME, result.data.token, getCookieOptions(tokenData?.maxAge || 7 * 24 * 60 * 60 * 1000));
 
         res.status(200).json(result);
       } else {
@@ -177,11 +177,11 @@ export class AuthController {
   }
 
   /**
-   * Logout user - invalidate session in database and clear cookie
+   * Logout user - invalidate session in database and clear user cookie
    */
   async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      // Extract token from cookie or header
+      // Extract token from user cookie or header
       const token = req.cookies?.[AUTH_COOKIE_NAME] || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
       if (token) {
@@ -189,7 +189,7 @@ export class AuthController {
         await authService.logout(token);
       }
 
-      // Clear the auth cookie
+      // Clear the user auth cookie
       res.clearCookie(AUTH_COOKIE_NAME, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -211,7 +211,41 @@ export class AuthController {
   }
 
   /**
-   * Logout all sessions for current user and clear cookie
+   * Logout admin - invalidate session in database and clear admin cookie
+   */
+  async logoutAdmin(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      // Extract token from admin cookie or header
+      const token = req.cookies?.[ADMIN_AUTH_COOKIE_NAME] || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
+
+      if (token) {
+        // Invalidate session in database
+        await authService.logout(token);
+      }
+
+      // Clear the admin auth cookie
+      res.clearCookie(ADMIN_AUTH_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        path: "/",
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Admin logged out successfully",
+      });
+    } catch (error) {
+      console.error("Admin logout controller error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error during logout",
+      });
+    }
+  }
+
+  /**
+   * Logout all sessions for current user and clear user cookie
    */
   async logoutAll(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
@@ -226,7 +260,7 @@ export class AuthController {
       // Invalidate all sessions for user
       const deletedCount = await authService.logoutAllSessions(req.user.id);
 
-      // Clear the auth cookie
+      // Clear the user auth cookie
       res.clearCookie(AUTH_COOKIE_NAME, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -240,6 +274,43 @@ export class AuthController {
       });
     } catch (error) {
       console.error("Logout all controller error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error during logout",
+      });
+    }
+  }
+
+  /**
+   * Logout all sessions for current admin and clear admin cookie
+   */
+  async logoutAllAdmin(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "User not authenticated",
+        });
+        return;
+      }
+
+      // Invalidate all sessions for admin
+      const deletedCount = await authService.logoutAllSessions(req.user.id);
+
+      // Clear the admin auth cookie
+      res.clearCookie(ADMIN_AUTH_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        path: "/",
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Admin successfully logged out from all ${deletedCount} session(s)`,
+      });
+    } catch (error) {
+      console.error("Admin logout all controller error:", error);
       res.status(500).json({
         success: false,
         message: "Internal server error during logout",

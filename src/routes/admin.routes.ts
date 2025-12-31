@@ -1,12 +1,12 @@
 import { userController } from "../controllers/user.controller.js";
-import { adminRouteAuthentication, authenticateToken } from "../middleware/auth.middleware.js";
+import { authenticateAdminToken } from "../middleware/auth.middleware.js";
 import { validateUserIdParam, validateCreateAdmin, validateGetAllAdminsQuery } from "../validations/user.validation.js";
 import { Router } from "express";
 
 const router = Router();
 
-// All routes require authentication and admin role
-router.use([adminRouteAuthentication]);
+// All routes require admin authentication using admin-specific cookie
+router.use(authenticateAdminToken);
 
 /**
  * @route   GET /api/admin

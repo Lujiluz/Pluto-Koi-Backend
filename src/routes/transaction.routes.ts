@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { transactionController } from "../controllers/transaction.controller.js";
-import { authenticateToken, requireAdmin } from "../middleware/auth.middleware.js";
+import { authenticateToken, authenticateAdminToken } from "../middleware/auth.middleware.js";
 import { uploadPaymentProof } from "../middleware/uploadMiddleware.js";
 import { validateGuestPurchase, validateUserPurchase, validateUpdateTransactionStatus, validateTransactionQuery } from "../validations/transaction.validation.js";
 
@@ -54,7 +54,7 @@ router.get("/:id", authenticateToken, transactionController.getTransactionById.b
  * @access  Private (admin only)
  * @query   status, paymentStatus, userId, productId, page, limit
  */
-router.get("/", authenticateToken, requireAdmin, validateTransactionQuery, transactionController.getAllTransactions.bind(transactionController));
+router.get("/", authenticateAdminToken, validateTransactionQuery, transactionController.getAllTransactions.bind(transactionController));
 
 /**
  * @route   PATCH /api/transaction/:id
@@ -62,20 +62,20 @@ router.get("/", authenticateToken, requireAdmin, validateTransactionQuery, trans
  * @access  Private (admin only)
  * @body    { status?, paymentStatus?, adminNotes? }
  */
-router.patch("/:id", authenticateToken, requireAdmin, validateUpdateTransactionStatus, transactionController.updateTransactionStatus.bind(transactionController));
+router.patch("/:id", authenticateAdminToken, validateUpdateTransactionStatus, transactionController.updateTransactionStatus.bind(transactionController));
 
 /**
  * @route   DELETE /api/transaction/:id
  * @desc    Delete transaction (admin only)
  * @access  Private (admin only)
  */
-router.delete("/:id", authenticateToken, requireAdmin, transactionController.deleteTransaction.bind(transactionController));
+router.delete("/:id", authenticateAdminToken, transactionController.deleteTransaction.bind(transactionController));
 
 /**
  * @route   GET /api/transaction/statistics/all
  * @desc    Get transaction statistics (admin only)
  * @access  Private (admin only)
  */
-router.get("/statistics/all", authenticateToken, requireAdmin, transactionController.getStatistics.bind(transactionController));
+router.get("/statistics/all", authenticateAdminToken, transactionController.getStatistics.bind(transactionController));
 
 export default router;

@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { authenticateToken } from "../middleware/auth.middleware.js";
+import { authenticateAdminToken } from "../middleware/auth.middleware.js";
 import { validateGeneralRules } from "../validations/general-rules.validation.js";
 import { generalRulesController } from "../controllers/general-rules.controller.js";
 
 const router = Router();
 
-router.use(authenticateToken);
+// All general rules management routes require admin authentication
+router.use(authenticateAdminToken);
 
 /**
  * @route   GET /api/general-rules

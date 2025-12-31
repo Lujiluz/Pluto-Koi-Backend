@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { productController } from "../controllers/product.controller.js";
-import { authenticateToken, requireAdmin } from "../middleware/auth.middleware.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 import { uploadProductMedia, handleMulterError } from "../middleware/uploadMiddleware.js";
 import { validateCreateProduct, validateUpdateProduct, validateProductId, validatePriceRange, validateProductQuery, validateFeaturedProductsQuery } from "../validations/product.validation.js";
 
@@ -86,6 +86,6 @@ router.delete("/:id", validateProductId, productController.deleteProduct.bind(pr
  * @desc    Permanently delete product by ID (admin only)
  * @access  Private (Admin only)
  */
-router.delete("/:id/permanent", authenticateToken, validateProductId, requireAdmin, productController.permanentlyDeleteProduct.bind(productController));
+router.delete("/:id/permanent", authenticateToken, validateProductId, productController.permanentlyDeleteProduct.bind(productController));
 
 export default router;

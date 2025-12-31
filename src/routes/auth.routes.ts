@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authController } from "../controllers/auth.controller.js";
-import { authenticateToken } from "../middleware/auth.middleware.js";
+import { authenticateToken, authenticateAdminToken } from "../middleware/auth.middleware.js";
 import { authLoggingMiddleware } from "../middleware/logging.middleware.js";
 import { validateRegister, validateLogin } from "../validations/auth.validation.js";
 
@@ -64,5 +64,19 @@ router.post("/logout", authenticateToken, authController.logout.bind(authControl
  * @access  Private
  */
 router.post("/logout-all", authenticateToken, authController.logoutAll.bind(authController));
+
+/**
+ * @route   POST /api/auth/admin/logout
+ * @desc    Logout admin (invalidate session in database)
+ * @access  Private (Admin only)
+ */
+router.post("/admin/logout", authenticateAdminToken, authController.logoutAdmin.bind(authController));
+
+/**
+ * @route   POST /api/auth/admin/logout-all
+ * @desc    Logout from all sessions for current admin
+ * @access  Private (Admin only)
+ */
+router.post("/admin/logout-all", authenticateAdminToken, authController.logoutAllAdmin.bind(authController));
 
 export default router;

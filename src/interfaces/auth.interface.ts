@@ -49,7 +49,8 @@ export interface ApiResponse<T = any> {
 }
 
 // Cookie configuration
-export const AUTH_COOKIE_NAME = "auth_token";
+export const AUTH_COOKIE_NAME = "auth_token"; // For regular users
+export const ADMIN_AUTH_COOKIE_NAME = "auth_admin_token"; // For admin users
 
 export const getCookieOptions = (maxAge: number): CookieOptions => ({
   httpOnly: true, // Prevents XSS attacks - cookie cannot be accessed via JavaScript

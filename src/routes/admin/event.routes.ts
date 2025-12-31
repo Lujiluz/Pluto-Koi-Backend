@@ -1,59 +1,60 @@
 import { Router } from "express";
-import { eventController } from "../controllers/event.controller.js";
-import { authenticateAdminToken } from "../middleware/auth.middleware.js";
-import { validateCreateEvent, validateUpdateEvent, validateEventId } from "../validations/event.validation.js";
+import { eventController } from "../../controllers/event.controller.js";
+import { validateCreateEvent, validateUpdateEvent, validateEventId } from "../../validations/event.validation.js";
 
 const router = Router();
 
-// All event management routes require admin authentication
-router.use(authenticateAdminToken);
+/**
+ * Admin Event Routes
+ * All routes are protected by authenticateAdminToken middleware in admin/index.ts
+ */
 
 /**
- * @route   GET /api/event/active
+ * @route   GET /api/admin/event/active
  * @desc    Get the active event
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.get("/active", eventController.getActiveEvent.bind(eventController));
 
 /**
- * @route   GET /api/event
+ * @route   GET /api/admin/event
  * @desc    Get all events
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.get("/", eventController.getAllEvents.bind(eventController));
 
 /**
- * @route   POST /api/event
+ * @route   POST /api/admin/event
  * @desc    Create a new event
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.post("/", validateCreateEvent, eventController.createEvent.bind(eventController));
 
 /**
- * @route   GET /api/event/:id
+ * @route   GET /api/admin/event/:id
  * @desc    Get event by ID
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.get("/:id", validateEventId, eventController.getEventById.bind(eventController));
 
 /**
- * @route   PUT /api/event/:id
+ * @route   PUT /api/admin/event/:id
  * @desc    Update event by ID
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.put("/:id", validateEventId, validateUpdateEvent, eventController.updateEvent.bind(eventController));
 
 /**
- * @route   DELETE /api/event/:id
+ * @route   DELETE /api/admin/event/:id
  * @desc    Delete event by ID
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.delete("/:id", validateEventId, eventController.deleteEvent.bind(eventController));
 
 /**
- * @route   POST /api/event/recalculate
+ * @route   POST /api/admin/event/recalculate
  * @desc    Recalculate total bid amount for active event
- * @access  Private
+ * @access  Private (Admin only)
  */
 router.post("/recalculate", eventController.recalculateTotalBidAmount.bind(eventController));
 

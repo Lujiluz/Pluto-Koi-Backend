@@ -1,11 +1,12 @@
 import { userController } from "../controllers/user.controller.js";
-import { adminRouteAuthentication, authenticateToken } from "../middleware/auth.middleware.js";
+import { authenticateAdminToken } from "../middleware/auth.middleware.js";
 import { validateGetAllUsersQuery, validateUserIdParam, validateRejectUser } from "../validations/user.validation.js";
 import { Router } from "express";
 
 const router = Router();
 
-router.use([adminRouteAuthentication]);
+// Use authenticateAdminToken which reads from admin-specific cookie
+router.use(authenticateAdminToken);
 
 /**
  * @route   GET /api/user
