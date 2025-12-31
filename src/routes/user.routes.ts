@@ -5,7 +5,7 @@ import { Router } from "express";
 
 const router = Router();
 
-router.use([authenticateToken, adminRouteAuthentication]);
+router.use([adminRouteAuthentication]);
 
 /**
  * @route   GET /api/user

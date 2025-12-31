@@ -6,7 +6,7 @@ import { Router } from "express";
 const router = Router();
 
 // All routes require authentication and admin role
-router.use([authenticateToken, adminRouteAuthentication]);
+router.use([adminRouteAuthentication]);
 
 /**
  * @route   GET /api/admin
