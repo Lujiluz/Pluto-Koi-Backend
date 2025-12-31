@@ -39,10 +39,11 @@ class AuctionService {
       if (auctions.length > 0) {
         const auctionsWithHighestBids = await Promise.all(
           auctions.map(async (auction) => {
-            const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auction._id as string));
+            const auctionId = (auction._id as Types.ObjectId).toString();
+            const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auctionId));
 
             if (highestBid) {
-              await auctionRepository.update(auction._id as string, { highestBid: highestBid.bidAmount });
+              await auctionRepository.update(auctionId, { highestBid: highestBid.bidAmount });
             }
             return {
               ...auction.toObject(),
@@ -212,11 +213,11 @@ class AuctionService {
     try {
       const auction = await auctionRepository.findById(auctionId);
 
-      const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auction?._id as string));
+      const highestBid = await AuctionActivityModel.getHighestBidForAuction(new Types.ObjectId(auction?._id?.toString() ?? ""));
       console.log("HIGHEST BID: ", highestBid);
 
       if (highestBid) {
-        await auctionRepository.update(auction?._id as string, { highestBid: highestBid.bidAmount });
+        await auctionRepository.update(auction?._id?.toString() ?? "", { highestBid: highestBid.bidAmount });
       }
 
       if (!auction) {
