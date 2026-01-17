@@ -112,7 +112,7 @@ export class ProductController {
         return;
       }
 
-      const response = await productService.getProductById(id);
+      const response = await productService.getProductById(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving product:", error);
@@ -197,7 +197,7 @@ export class ProductController {
       }
 
       // Update product
-      const response = await productService.updateProduct(id, updateData);
+      const response = await productService.updateProduct(id as string, updateData);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error updating product:", error);
@@ -220,7 +220,7 @@ export class ProductController {
         return;
       }
 
-      const response = await productService.deleteProduct(id);
+      const response = await productService.deleteProduct(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -251,7 +251,7 @@ export class ProductController {
         return;
       }
 
-      const response = await productService.permanentlyDeleteProduct(id);
+      const response = await productService.permanentlyDeleteProduct(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error permanently deleting product:", error);
@@ -313,7 +313,7 @@ export class ProductController {
         return;
       }
 
-      const response = await productService.toggleProductStatus(id);
+      const response = await productService.toggleProductStatus(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error toggling product status:", error);

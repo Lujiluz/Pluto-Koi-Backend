@@ -89,7 +89,7 @@ class AuctionController {
     try {
       const { id } = req.params;
 
-      const response = await auctionService.getAuctionById(id);
+      const response = await auctionService.getAuctionById(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving auction:", error);

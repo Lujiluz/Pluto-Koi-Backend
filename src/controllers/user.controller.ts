@@ -19,7 +19,7 @@ class UserController {
     try {
       const { id } = req.params;
 
-      const result = await userService.getUserById(id);
+      const result = await userService.getUserById(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error retrieving user:", error);
@@ -31,7 +31,7 @@ class UserController {
     try {
       const { id } = req.params;
 
-      const result = await userService.deleteUserById(id);
+      const result = await userService.deleteUserById(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -43,7 +43,7 @@ class UserController {
     try {
       const { id } = req.params;
 
-      const result = await userService.blockUser(id);
+      const result = await userService.blockUser(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error blocking user:", error);
@@ -55,7 +55,7 @@ class UserController {
     try {
       const { id } = req.params;
 
-      const result = await userService.unblockUser(id);
+      const result = await userService.unblockUser(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error unblocking user:", error);
@@ -76,7 +76,7 @@ class UserController {
         return;
       }
 
-      const result = await userService.approveUser(id, adminId);
+      const result = await userService.approveUser(id as string, adminId);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error approving user:", error);
@@ -98,7 +98,7 @@ class UserController {
         return;
       }
 
-      const result = await userService.rejectUser(id, adminId, reason);
+      const result = await userService.rejectUser(id as string, adminId, reason);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error rejecting user:", error);
@@ -136,7 +136,7 @@ class UserController {
     try {
       const { id } = req.params;
 
-      const result = await userService.getAdminById(id);
+      const result = await userService.getAdminById(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error retrieving admin:", error);
@@ -157,7 +157,7 @@ class UserController {
         return;
       }
 
-      const result = await userService.deleteAdmin(id, requesterId);
+      const result = await userService.deleteAdmin(id as string, requesterId);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error deleting admin:", error);
@@ -178,7 +178,7 @@ class UserController {
         return;
       }
 
-      const result = await userService.blockAdmin(id, requesterId);
+      const result = await userService.blockAdmin(id as string, requesterId);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error blocking admin:", error);
@@ -190,7 +190,7 @@ class UserController {
     try {
       const { id } = req.params;
 
-      const result = await userService.unblockAdmin(id);
+      const result = await userService.unblockAdmin(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error unblocking admin:", error);

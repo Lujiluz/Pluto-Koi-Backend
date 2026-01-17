@@ -72,7 +72,7 @@ export class TransactionController {
     try {
       const { id } = req.params;
 
-      const transaction = await transactionService.getTransactionById(id);
+      const transaction = await transactionService.getTransactionById(id as string);
 
       // Check if user has permission to view this transaction
       if (req.user?.role !== "admin" && transaction.userId?.toString() !== req.user?.id) {
@@ -204,7 +204,7 @@ export class TransactionController {
       const { id } = req.params;
       const updates = req.body as UpdateTransactionStatusInput;
 
-      const result = await transactionService.updateTransactionStatus(id, updates);
+      const result = await transactionService.updateTransactionStatus(id as string, updates);
 
       res.status(200).json({
         success: result.success,
@@ -228,7 +228,7 @@ export class TransactionController {
 
       const { id } = req.params;
 
-      const result = await transactionService.deleteTransaction(id);
+      const result = await transactionService.deleteTransaction(id as string);
 
       res.status(200).json({
         success: result.success,

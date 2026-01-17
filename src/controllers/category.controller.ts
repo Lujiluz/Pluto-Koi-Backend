@@ -86,7 +86,7 @@ export class CategoryController {
         return;
       }
 
-      const response = await categoryService.getCategoryById(id);
+      const response = await categoryService.getCategoryById(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving category:", error);
@@ -126,7 +126,7 @@ export class CategoryController {
       }
 
       // Update category
-      const response = await categoryService.updateCategory(id, updateData);
+      const response = await categoryService.updateCategory(id as string, updateData);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error updating category:", error);
@@ -149,7 +149,7 @@ export class CategoryController {
         return;
       }
 
-      const response = await categoryService.deleteCategory(id);
+      const response = await categoryService.deleteCategory(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error deleting category:", error);
@@ -180,7 +180,7 @@ export class CategoryController {
         return;
       }
 
-      const response = await categoryService.permanentlyDeleteCategory(id);
+      const response = await categoryService.permanentlyDeleteCategory(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error permanently deleting category:", error);
@@ -203,7 +203,7 @@ export class CategoryController {
         return;
       }
 
-      const response = await categoryService.toggleCategoryStatus(id);
+      const response = await categoryService.toggleCategoryStatus(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error toggling category status:", error);

@@ -34,7 +34,7 @@ class EventController {
   async getEventById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const response = await eventService.getEventById(id);
+      const response = await eventService.getEventById(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error retrieving event:", error);
@@ -74,7 +74,7 @@ class EventController {
       if (isActive !== undefined) eventData.isActive = isActive;
       if (totalBidAmount !== undefined) eventData.totalBidAmount = totalBidAmount;
 
-      const response = await eventService.updateEvent(id, eventData);
+      const response = await eventService.updateEvent(id as string, eventData);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error updating event:", error);
@@ -88,7 +88,7 @@ class EventController {
   async deleteEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const response = await eventService.deleteEvent(id);
+      const response = await eventService.deleteEvent(id as string);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error deleting event:", error);

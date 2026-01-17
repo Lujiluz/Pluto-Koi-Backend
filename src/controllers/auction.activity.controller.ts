@@ -64,7 +64,7 @@ export class AuctionActivityController {
         return;
       }
 
-      const result = await auctionActivityService.getAuctionParticipation(auctionId);
+      const result = await auctionActivityService.getAuctionParticipation(auctionId as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error getting auction participation:", error);

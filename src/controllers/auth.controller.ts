@@ -333,7 +333,7 @@ export class AuthController {
         return;
       }
 
-      const result = await authService.verifyApprovalToken(token);
+      const result = await authService.verifyApprovalToken(token as string);
 
       // Redirect to frontend URL based on result
       res.redirect(result.redirectUrl);
