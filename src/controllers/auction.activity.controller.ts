@@ -105,7 +105,7 @@ export class AuctionActivityController {
         return;
       }
 
-      const result = await auctionActivityService.getUserAuctionHistory(auctionId as string, userId);
+      const result = await auctionActivityService.getUserAuctionHistory(auctionId as string, userId as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error getting user auction history:", error);
