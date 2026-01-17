@@ -101,7 +101,7 @@ class AuctionController {
     try {
       const { id } = req.params;
 
-      const result = await auctionService.deleteAuctionById(id);
+      const result = await auctionService.deleteAuctionById(id as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error deleting auction:", error);
@@ -159,7 +159,7 @@ class AuctionController {
 
       console.log("auctionData in controller:", auctionData);
 
-      const response = await auctionService.updateAuction(id, auctionData);
+      const response = await auctionService.updateAuction(id as string, auctionData);
       res.status(200).json(response);
     } catch (error) {
       console.error("Error updating auction:", error);

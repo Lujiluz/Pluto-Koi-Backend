@@ -105,7 +105,7 @@ export class AuctionActivityController {
         return;
       }
 
-      const result = await auctionActivityService.getUserAuctionHistory(auctionId, userId);
+      const result = await auctionActivityService.getUserAuctionHistory(auctionId as string, userId);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error getting user auction history:", error);
@@ -152,7 +152,7 @@ export class AuctionActivityController {
         return;
       }
 
-      const result = await auctionActivityService.getAuctionStats(auctionId);
+      const result = await auctionActivityService.getAuctionStats(auctionId as string);
       res.status(200).json(result);
     } catch (error) {
       console.error("Error getting auction stats:", error);
@@ -176,7 +176,7 @@ export class AuctionActivityController {
       }
 
       // This is a simple wrapper around the participation endpoint for just the highest bid
-      const participation = await auctionActivityService.getAuctionParticipation(auctionId);
+      const participation = await auctionActivityService.getAuctionParticipation(auctionId as string);
 
       res.status(200).json({
         status: "success",
